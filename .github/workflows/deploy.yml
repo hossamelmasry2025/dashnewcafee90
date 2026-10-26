@@ -1,0 +1,46 @@
+# Build the dashboard and upload it to Hostinger on every push to main.
+# Needs these repo secrets: SSH_HOST, SSH_PORT, SSH_USER, SSH_KEY
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  DEPLOY_PATH: /home/u714428602/domains/dashboard.ninety90degree.com/public_html
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Build
+        run: |
+          npm ci
+          npm run build
+
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          # Server host key (verified against hPanel fingerprint SHA256:ZmE4e/CT5c...)
+          echo "[${{ secrets.SSH_HOST }}]:${{ secrets.SSH_PORT }} ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIyse96dUeLo4oKa76H8AfK4q4/RHbHMcxt+1GZRGaI9" >> ~/.ssh/known_hosts
+
+      - name: Upload build
+        # No --delete: keeps the old/ backup folders already on the server.
+        run: |
+          rsync -az \
+            -e "ssh -i ~/.ssh/deploy_key -p ${{ secrets.SSH_PORT }}" \
+            dist/ "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ env.DEPLOY_PATH }}/"
