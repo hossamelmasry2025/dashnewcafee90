@@ -1,0 +1,1619 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <title>كافيه 90 • لوحة التحكم التنفيذية | Cafe 90 Dashboard</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='46' fill='%232C180E'/><circle cx='50' cy='50' r='38' fill='%23D4A037'/><circle cx='50' cy='50' r='32' fill='%235E3514'/><path d='M50 30 C45 35 45 45 50 50 C55 45 55 35 50 30 Z' fill='%23FFFDF9'/></svg>" />
+
+  <!-- Google Fonts: Cairo, Tajawal, Plus Jakarta Sans, Playfair Display -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            gold: {
+              50: '#FDF9F0',
+              100: '#FAF2DD',
+              200: '#F3E2B8',
+              300: '#ECCF91',
+              400: '#E2B963',
+              500: '#D4A037',
+              600: '#C08625',
+              700: '#9B6619',
+              800: '#754B13',
+              900: '#52340C',
+            },
+            chocolate: {
+              50: '#F9F5F3',
+              100: '#F0E6E1',
+              200: '#DEC9C0',
+              300: '#C7A79A',
+              400: '#9B6F5D',
+              500: '#6E4532',
+              600: '#4E2F20',
+              700: '#3D2314',
+              800: '#2C180E',
+              900: '#1F1008',
+              950: '#150A05',
+            },
+            cream: {
+              50: '#FCFAF7',
+              100: '#F7F3ED',
+              200: '#EFE6DB',
+              300: '#E2D3C1',
+            }
+          },
+          fontFamily: {
+            sans: ['Plus Jakarta Sans', 'Cairo', 'Tajawal', 'system-ui', 'sans-serif'],
+            cairo: ['Cairo', 'Tajawal', 'sans-serif'],
+            tajawal: ['Tajawal', 'Cairo', 'sans-serif'],
+            serif: ['Playfair Display', 'Georgia', 'serif'],
+          },
+          boxShadow: {
+            'luxury': '0 10px 30px -10px rgba(44, 24, 14, 0.08), 0 4px 6px -2px rgba(44, 24, 14, 0.04)',
+            'gold-glow': '0 0 20px -3px rgba(212, 160, 55, 0.35)',
+            'card': '0 2px 12px -2px rgba(44, 24, 14, 0.06)',
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- React 18 & Babel -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    html, body {
+      overflow-x: hidden;
+      max-width: 100vw;
+      background-color: #FAF8F5;
+      color: #2C180E;
+    }
+    [dir="rtl"] body, [dir="rtl"] {
+      font-family: 'Cairo', 'Tajawal', sans-serif;
+    }
+    [dir="ltr"] body, [dir="ltr"] {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(44,24,14,0.15); border-radius: 9999px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(44,24,14,0.3); }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes scaleUp { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
+    .animate-fade-in { animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    .animate-scale-up { animation: scaleUp 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    const STORAGE_KEY = 'cafe90_dashboard_db_v1';
+    const LANG_KEY = 'cafe90_dashboard_lang';
+
+    // Translations Dictionary
+    const i18n = {
+      ar: {
+        cafeName: "كافيه 90",
+        tagline: "القهوة، اللحظات، بارتقاء",
+        welcomeAdmin: "مرحباً، المدير",
+        branchOpen: "الفرع مفتوح • شارع التسعين",
+        searchPlaceholder: "ابحث في الطلبات، قائمة الطعام، الكوبونات، الغرف...",
+        resetSeed: "استعادة البيانات",
+        notifications: "الإشعارات",
+        unreadAlerts: "تنبيهات غير مقروءة",
+        signedInAs: "مسجل الدخول باسم",
+        superAdmin: "المدير العام",
+        signOut: "تسجيل الخروج",
+
+        // Nav
+        navOverview: "لوحة التحكم العامة",
+        navBanners: "إدارة البانرات والعروض",
+        navMenuCatalog: "قائمة المشروبات والمأكولات",
+        navMenuItems: "أصناف القائمة والأسعار",
+        navCategories: "الأقسام والتصنيفات",
+        navOperations: "العمليات والتشغيل",
+        navOrders: "إدارة وتجهيز الطلبات",
+        navPointsCoupons: "نقاط الولاء والكوبونات",
+        navFacilitiesRooms: "الغرف وقاعات الاجتماعات",
+        navReviews: "تقييمات وآراء الضيوف",
+        navAdminGroup: "الإدارة والإعدادات",
+        navCafeInfo: "بيانات الكافيه والمواعيد",
+        navStaffRoles: "طاقم العمل والصلاحيات",
+
+        // Overview
+        intelligenceBadge: "ذكاء العمليات لكافيه 90",
+        overviewHeading: "مؤشرات الأداء والتشغيل الراقي",
+        overviewDesc: "متابعة حية لعمليات فرع شارع التسعين، طلبات البار والمشروبات، غرف الاجتماعات التنفيذية، ونقاط الولاء لحظياً.",
+        liveOrdersBtn: "طلبات المطبخ الحالية",
+        manageMenuBtn: "إدارة قائمة الطعام",
+        totalGrossRevenue: "إجمالي الإيرادات",
+        totalOrders: "إجمالي الطلبات",
+        activeLoyaltyMembers: "أعضاء برنامج الولاء",
+        guestSatisfaction: "مستوى رضا الضيوف",
+        revenueTrends: "حركة الإيرادات والمبيعات الأسبوعية",
+        topSignatureItems: "أكثر الأصناف طلباً",
+        liveOrdersTitle: "طلبات المطبخ والبار المباشرة",
+        viewAllOrders: "عرض كافة الطلبات",
+        appBannersPromo: "بانرات وعروض تطبيق الهاتف",
+        appBannersPromoDesc: "3 بانرات نشطة تظهر حالياً على تطبيق كافيه 90 لهواتف iOS وأندرويد.",
+        manageAppBanners: "إدارة البانرات",
+
+        // Actions & Fields
+        addNewItem: "إضافة صنف جديد",
+        createNewItem: "إضافة صنف جديد للقائمة",
+        editItem: "تعديل الصنف",
+        itemNameEn: "اسم الصنف (بالإنجليزية)",
+        itemNameAr: "اسم الصنف (بالعربية)",
+        category: "القسم الرئيسي",
+        subcategory: "التصنيف الفرعي",
+        priceEgp: "سعر البيع (ج.م)",
+        costPriceEgp: "سعر التكلفة (ج.م)",
+        stockCount: "الكمية بالمخزن",
+        prepTime: "وقت التحضير",
+        calories: "السعرات الحرارية",
+        stockStatus: "حالة التوفر",
+        allergens: "مسببات الحساسية",
+        imageUrl: "رابط الصورة (URL)",
+        description: "الوصف والمكونات",
+        featuredCheck: "تعيين كصنف مميز (يبرز في الصفحة الرئيسية للضيوف)",
+        saveChanges: "حفظ التعديلات",
+        publishItem: "نشر الصنف في القائمة",
+        cancel: "إلغاء",
+        inStock: "متوفر",
+        lowStock: "منخفض",
+        outOfStock: "غير متوفر",
+        orderId: "رقم الطلب",
+        customer: "الضيف",
+        diningType: "نوع الخدمة",
+        total: "الإجمالي",
+        status: "الحالة",
+        actions: "الإجراءات",
+        viewReceipt: "عرض الفاتورة",
+        closeReceipt: "إغلاق الفاتورة"
+      },
+      en: {
+        cafeName: "Cafe 90",
+        tagline: "Coffee, Moments, Elevated",
+        welcomeAdmin: "Welcome, Admin",
+        branchOpen: "Branch Open • Road 90",
+        searchPlaceholder: "Search orders, menu items, coupons, rooms...",
+        resetSeed: "Reset Seed",
+        notifications: "Notifications",
+        unreadAlerts: "unread alerts",
+        signedInAs: "Signed in as",
+        superAdmin: "Super Admin",
+        signOut: "Sign Out",
+
+        // Nav
+        navOverview: "Dashboard Overview",
+        navBanners: "Banner Management",
+        navMenuCatalog: "MENU CATALOG",
+        navMenuItems: "Menu Items Directory",
+        navCategories: "Categories & Subs",
+        navOperations: "OPERATIONS",
+        navOrders: "Order Management",
+        navPointsCoupons: "Points & Coupons",
+        navFacilitiesRooms: "Facilities & Rooms",
+        navReviews: "Customer Reviews",
+        navAdminGroup: "ADMINISTRATION",
+        navCafeInfo: "Cafe Info & Hours",
+        navStaffRoles: "Staff & Roles Auth",
+
+        // Overview
+        intelligenceBadge: "Cafe 90 Executive Intelligence",
+        overviewHeading: "Elevated Cafe Performance",
+        overviewDesc: "Monitoring Road 90 branch operations, live espresso bar orders, executive meeting pods, and loyalty reward conversions in real time.",
+        liveOrdersBtn: "Live Kitchen Orders",
+        manageMenuBtn: "Manage Menu",
+        totalGrossRevenue: "Total Gross Revenue",
+        totalOrders: "Total Orders",
+        activeLoyaltyMembers: "Active Loyalty Members",
+        guestSatisfaction: "Guest Satisfaction",
+        revenueTrends: "Weekly Revenue Breakdown (EGP)",
+        topSignatureItems: "Top Signature Items",
+        liveOrdersTitle: "Live Kitchen & Counter Orders",
+        viewAllOrders: "View All Orders",
+        appBannersPromo: "Customer App Hero Banners & Offers",
+        appBannersPromoDesc: "3 active banners currently featured on the Cafe 90 iOS & Android mobile application.",
+        manageAppBanners: "Manage Banners",
+
+        // Actions & Fields
+        addNewItem: "Add New Menu Item",
+        createNewItem: "Create New Menu Item",
+        editItem: "Edit Menu Item",
+        itemNameEn: "Item Name (English)",
+        itemNameAr: "Item Name (Arabic)",
+        category: "Category",
+        subcategory: "Subcategory",
+        priceEgp: "Selling Price (EGP)",
+        costPriceEgp: "Cost Price (EGP)",
+        stockCount: "Inventory Units",
+        prepTime: "Prep Time",
+        calories: "Calories",
+        stockStatus: "Stock Status",
+        allergens: "Allergens",
+        imageUrl: "Image URL",
+        description: "Description & Ingredients",
+        featuredCheck: "Mark as Featured Item (Highlighted on overview & guest homepage)",
+        saveChanges: "Save Changes",
+        publishItem: "Publish Item to Menu",
+        cancel: "Cancel",
+        inStock: "In Stock",
+        lowStock: "Low Stock",
+        outOfStock: "Out of Stock",
+        orderId: "Order ID",
+        customer: "Customer",
+        diningType: "Dining Type",
+        total: "Total",
+        status: "Status",
+        actions: "Actions",
+        viewReceipt: "View Receipt",
+        closeReceipt: "Close Receipt"
+      }
+    };
+
+    // Seed Data
+    const initialSeed = {
+      cafeInfo: {
+        name: "Cafe 90",
+        tagline: "Coffee, Moments, Elevated",
+        phone: "+20 100 909 0900",
+        whatsapp: "+20 100 909 0900",
+        email: "contact@cafe90egypt.com",
+        address: "90 North St., Sector 1, New Cairo, Cairo, Egypt",
+        currency: "EGP",
+        taxRate: 14,
+        serviceCharge: 12,
+        openingTimeWeekday: "07:00",
+        closingTimeWeekday: "00:00"
+      },
+      kpiStats: {
+        totalRevenue: 284500,
+        revenueGrowth: "+18.6%",
+        totalOrders: 2140,
+        ordersGrowth: "+14.2%",
+        activeCustomers: 4890,
+        customersGrowth: "+9.4%",
+        averageRating: 4.9,
+        totalReviews: 328,
+        newReviewsThisWeek: 42
+      },
+      weeklyRevenue: [
+        { nameEn: "Mon", nameAr: "الإثنين", revenue: 32400 },
+        { nameEn: "Tue", nameAr: "الثلاثاء", revenue: 34800 },
+        { nameEn: "Wed", nameAr: "الأربعاء", revenue: 38200 },
+        { nameEn: "Thu", nameAr: "الخميس", revenue: 54600 },
+        { nameEn: "Fri", nameAr: "الجمعة", revenue: 68900 },
+        { nameEn: "Sat", nameAr: "السبت", revenue: 62100 },
+        { nameEn: "Sun", nameAr: "الأحد", revenue: 41200 }
+      ],
+      banners: [
+        { id: "b1", title: "Signature Gold Spanish Latte", titleAr: "سبانش لاتيه 90 الذهبي", badge: "FEATURED", imageUrl: "https://images.unsplash.com/photo-1541167760496-1628856ab772?auto=format&fit=crop&w=1200&q=80", subtitle: "Brewed with Ethiopian Yirgacheffe & infused with 24k gold leaf" },
+        { id: "b2", title: "Artisan Pistachio Croissants", titleAr: "كرواسون الفستق الفرنسي", badge: "FRESH BAKED", imageUrl: "https://images.unsplash.com/photo-1555507036-ab1f4038808a?auto=format&fit=crop&w=1200&q=80", subtitle: "Baked fresh every morning by master chefs in Cairo" },
+        { id: "b3", title: "The Boardroom 90° VIP", titleAr: "قاعة الاجتماعات 90 التنفيذية", badge: "VIP WORKSPACE", imageUrl: "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1200&q=80", subtitle: "High-speed Wi-Fi 6, 4K display, and dedicated barista" }
+      ],
+      categories: [
+        { id: "c1", name: "Specialty Hot Coffee", nameAr: "القهوة المختصة الساخنة", itemCount: 12 },
+        { id: "c2", name: "Cold Brew & Iced Coffee", nameAr: "القهوة المثلجة والمقطرة", itemCount: 9 },
+        { id: "c3", name: "Signature 90° Blends", nameAr: "مشروبات 90 المميزة", itemCount: 6 },
+        { id: "c4", name: "Artisan Bakery & Pastries", nameAr: "المخبوزات والحلويات", itemCount: 14 }
+      ],
+      menuItems: [
+        { id: "m1", name: "90° Signature Gold Spanish Latte", nameAr: "سبانش لاتيه 90 الذهبي", category: "Signature 90° Blends", categoryAr: "مشروبات 90 المميزة", price: 145, stockStatus: "in_stock", stockCount: 140, prepTime: "4 mins", calories: 280, imageUrl: "https://images.unsplash.com/photo-1541167760496-1628856ab772?auto=format&fit=crop&w=600&q=80", featured: true },
+        { id: "m2", name: "Ethiopian V60 Single Origin", nameAr: "قهوة مقطرة V60 إثيوبيا", category: "Specialty Hot Coffee", categoryAr: "القهوة المختصة الساخنة", price: 120, stockStatus: "in_stock", stockCount: 85, prepTime: "6 mins", calories: 5, imageUrl: "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=600&q=80", featured: true },
+        { id: "m3", name: "Salted Caramel Cold Foam Brew", nameAr: "كولد برو برغوة الكراميل", category: "Cold Brew & Iced Coffee", categoryAr: "القهوة المثلجة والمقطرة", price: 135, stockStatus: "in_stock", stockCount: 64, prepTime: "3 mins", calories: 190, imageUrl: "https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?auto=format&fit=crop&w=600&q=80", featured: true },
+        { id: "m4", name: "Pistachio Rose Croissant Supreme", nameAr: "كرواسون الفستق والورد", category: "Artisan Bakery & Pastries", categoryAr: "المخبوزات والحلويات", price: 110, stockStatus: "low_stock", stockCount: 6, prepTime: "2 mins", calories: 420, imageUrl: "https://images.unsplash.com/photo-1555507036-ab1f4038808a?auto=format&fit=crop&w=600&q=80", featured: true }
+      ],
+      orders: [
+        { id: "o1", orderNumber: "9082", customerName: "Dr. Tarek El-Kady", customerPhone: "+20 101 234 5678", diningType: "Dine-in (Table #14)", diningTypeAr: "صالة (طاولة 14)", status: "Preparing", statusAr: "قيد التحضير", totalPrice: 504, items: ["2x 90° Signature Gold Spanish Latte", "1x Classic Velvet Cortado"] },
+        { id: "o2", orderNumber: "9081", customerName: "Laila Mostafa", customerPhone: "+20 114 887 9922", diningType: "Room Delivery (Boardroom 90)", diningTypeAr: "خدمة قاعة 90", status: "Ready", statusAr: "جاهز للاستلام", totalPrice: 637, items: ["3x Pistachio Rose Croissant", "2x Ethiopian V60 Single Origin"] },
+        { id: "o3", orderNumber: "9080", customerName: "Youssef Mansour", customerPhone: "+20 122 345 6789", diningType: "Takeaway", diningTypeAr: "استلام تيك أواي", status: "Pending", statusAr: "قيد الانتظار", totalPrice: 279, items: ["1x Smoked Salmon Toast"] }
+      ],
+      rooms: [
+        { id: "r1", name: "The Boardroom 90°", nameAr: "قاعة الاجتماعات 90 التنفيذية", capacity: 12, hourlyRate: 650, imageUrl: "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=800&q=80", descAr: "قاعة اجتماعات فاخرة مع شاشة 4K مقاس 75 بوصة وعازل صوتي وباريستا خاص." },
+        { id: "r2", name: "Executive Pod Alpha", nameAr: "كبسولة العمل ألفا", capacity: 4, hourlyRate: 350, imageUrl: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=800&q=80", descAr: "كبسولة زجاجية خاصة للمفاوضات وجلسات العمل الصغيرة." }
+      ],
+      coupons: [
+        { id: "cp1", code: "WELCOME90", discountValue: "20%", minOrder: "150", validUntil: "2026-12-31" },
+        { id: "cp2", code: "CAFE90GOLD", discountValue: "15%", minOrder: "200", validUntil: "2026-09-30" }
+      ],
+      reviews: [
+        { id: "rv1", customerName: "م. أحمد شوقي", rating: 5, date: "2026-08-21", comment: "بلا شك أفضل قهوة مختصة في التجمع الخامس والتسعين! خلطة الإسبانيش لاتيه الذهبي فوق الوصف." },
+        { id: "rv2", customerName: "سلمى منصور", rating: 5, date: "2026-08-20", comment: "كرواسون الفستق طازج جداً والقاعة التنفيذية ممتازة للاجتماعات الهادئة." }
+      ],
+      staff: [
+        { id: "s1", name: "تيتو (المدير العام)", email: "tito@cafe90egypt.com", roleAr: "المدير العام", roleEn: "Super Admin", statusAr: "نشط" },
+        { id: "s2", name: "عمر السيد", email: "omar.sayed@cafe90egypt.com", roleAr: "مدير الفرع", roleEn: "Branch Manager", statusAr: "نشط" }
+      ]
+    };
+
+    const Logo = ({ size = 'default', showTagline = true, variant = 'light' }) => {
+      const isSmall = size === 'small';
+      const taglineColor = variant === 'light' ? 'text-gold-300' : 'text-chocolate-600';
+      return (
+        <div className="flex flex-col items-center select-none">
+          <svg viewBox="0 0 200 130" className={isSmall ? "w-24 h-16" : "w-36 h-24"} fill="none">
+            <defs>
+              <linearGradient id="goldGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#F7E2B0" />
+                <stop offset="30%" stopColor="#D4A037" />
+                <stop offset="70%" stopColor="#C08625" />
+                <stop offset="100%" stopColor="#8C5C12" />
+              </linearGradient>
+              <radialGradient id="coffeeCrema" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="#D8A15A" />
+                <stop offset="40%" stopColor="#A8682A" />
+                <stop offset="80%" stopColor="#5E3514" />
+                <stop offset="100%" stopColor="#351C0A" />
+              </radialGradient>
+              <radialGradient id="goldCupRim" cx="50%" cy="50%" r="50%">
+                <stop offset="82%" stopColor="#351C0A" />
+                <stop offset="88%" stopColor="#B37C22" />
+                <stop offset="94%" stopColor="#F9E8BD" />
+                <stop offset="100%" stopColor="#6E4410" />
+              </radialGradient>
+            </defs>
+            <g opacity="0.85" stroke="url(#goldGrad1)" strokeWidth="1.7" strokeLinecap="round">
+              <path d="M102 24 C 99 16, 107 10, 104 2" fill="none" />
+              <path d="M110 26 C 114 18, 106 12, 111 4" fill="none" />
+              <path d="M117 28 C 115 20, 122 14, 118 6" fill="none" />
+            </g>
+            <path d="M80 44 C 76 34, 64 30, 52 33 C 38 37, 30 50, 31 66 C 32 80, 42 90, 55 88 C 66 86, 75 77, 78 68 C 79 63, 79 57, 78 50 C 72 59, 63 62, 53 61 C 43 59, 39 52, 40 45 C 41 38, 47 34, 55 34 C 66 34, 75 42, 75 58 C 75 78, 64 96, 42 108 C 49 105, 76 89, 81 64 C 82 58, 81 48, 80 44 Z" fill="url(#goldGrad1)" />
+            <circle cx="120" cy="62" r="32" fill="url(#goldCupRim)" stroke="url(#goldGrad1)" strokeWidth="3" />
+            <circle cx="120" cy="62" r="25.5" fill="url(#coffeeCrema)" />
+            <g fill="#FDF7EA" opacity="0.95">
+              <path d="M120 45 C 118 42, 115 42, 114 44 C 113 46, 114 48, 120 53 C 126 48, 127 46, 126 44 C 125 42, 122 42, 120 45 Z" />
+              <path d="M120 50 C 115 47, 109 49, 110 52 C 111 55, 116 57, 120 60 C 124 57, 129 55, 130 52 C 131 49, 125 47, 120 50 Z" />
+              <path d="M120 57 C 113 54, 107 57, 108 61 C 109 64, 115 66, 120 69 C 125 66, 131 64, 132 61 C 133 57, 127 54, 120 57 Z" />
+              <line x1="120" y1="43" x2="120" y2="82" stroke="#5E3514" strokeWidth="1.2" strokeLinecap="round" />
+            </g>
+            <path d="M152 57 C 158 57, 162 60, 162 64 C 162 68, 158 71, 152 71 Z" fill="url(#goldGrad1)" strokeWidth="1.5" />
+            <g transform="translate(148, 30) rotate(25) scale(0.9)">
+              <ellipse cx="6" cy="6" rx="6" ry="8.5" fill="url(#goldGrad1)" />
+              <path d="M6 1 C 4 4, 8 8, 6 11" stroke="#351C0A" strokeWidth="1.4" strokeLinecap="round" />
+            </g>
+            <circle cx="162" cy="51" r="2.2" fill="url(#goldGrad1)" />
+            <g transform="translate(0, 110)">
+              <line x1="20" y1="6" x2="85" y2="6" stroke="url(#goldGrad1)" strokeWidth="1.2" strokeLinecap="round" />
+              <g transform="translate(100, 6) scale(0.75)" fill="url(#goldGrad1)">
+                <path d="M0 -7 C-3 -3, -3 3, 0 6 C3 3, 3 -3, 0 -7 Z" />
+                <path d="M-5 -4 C-8 -1, -6 4, -1 5 C-4 2, -5 -1, -5 -4 Z" />
+                <path d="M5 -4 C8 -1, 6 4, 1 5 C4 2, 5 -1, 5 -4 Z" />
+                <circle cx="0" cy="0" r="1.5" fill="#351C0A" />
+              </g>
+              <line x1="115" y1="6" x2="180" y2="6" stroke="url(#goldGrad1)" strokeWidth="1.2" strokeLinecap="round" />
+            </g>
+          </svg>
+          {showTagline && (
+            <div className="text-center mt-1">
+              <span className={`text-[10px] tracking-[0.28em] font-semibold uppercase font-sans ${taglineColor}`}>
+                Coffee, Moments, Elevated
+              </span>
+              <div className="w-12 h-[1px] bg-gold-500/40 mx-auto mt-1" />
+            </div>
+          )}
+        </div>
+      );
+    };
+
+    function App() {
+      const [lang, setLang] = useState(() => localStorage.getItem(LANG_KEY) || 'ar');
+      const [db, setDb] = useState(() => {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          return raw ? JSON.parse(raw) : initialSeed;
+        } catch (e) {
+          return initialSeed;
+        }
+      });
+      const [currentView, setCurrentView] = useState('overview');
+      const [searchQuery, setSearchQuery] = useState('');
+      const [isModalOpen, setIsModalOpen] = useState(false);
+      const [editingBanner, setEditingBanner] = useState(null);
+      const [selectedOrder, setSelectedOrder] = useState(null);
+      const [reviewFilter, setReviewFilter] = useState('all');
+      const [toastMsg, setToastMsg] = useState(null);
+
+      const [newItemForm, setNewItemForm] = useState({
+        name: '',
+        nameAr: '',
+        category: 'Signature 90° Blends',
+        price: '145',
+        costPrice: '40',
+        stockCount: '50',
+        prepTime: '4 mins',
+        calories: '250',
+        stockStatus: 'in_stock',
+        allergens: 'Milk, Dairy',
+        imageUrl: 'https://images.unsplash.com/photo-1541167760496-1628856ab772?auto=format&fit=crop&w=600&q=80',
+        description: '',
+        featured: true
+      });
+
+      const isRtl = lang === 'ar';
+      const t = (key) => i18n[lang][key] || i18n.en[key] || key;
+
+      useEffect(() => {
+        document.documentElement.dir = isRtl ? 'rtl' : 'ltr';
+        document.documentElement.lang = lang;
+        localStorage.setItem(LANG_KEY, lang);
+      }, [lang, isRtl]);
+
+      useEffect(() => {
+        if (isModalOpen || editingBanner || selectedOrder) {
+          document.body.style.overflow = 'hidden';
+        } else {
+          document.body.style.overflow = 'unset';
+        }
+      }, [isModalOpen, editingBanner, selectedOrder]);
+
+      const showToast = (msg) => {
+        setToastMsg(msg);
+        setTimeout(() => setToastMsg(null), 3000);
+      };
+
+      const handleToggleLang = () => {
+        setLang((prev) => (prev === 'en' ? 'ar' : 'en'));
+      };
+
+      const handleSaveNewItem = (e) => {
+        e.preventDefault();
+        const created = {
+          id: `m-${Date.now()}`,
+          name: newItemForm.name || "Signature Specialty Item",
+          nameAr: newItemForm.nameAr || "صنف مميز كافيه 90",
+          category: newItemForm.category,
+          categoryAr: "مشروبات ومأكولات مميزة",
+          price: Number(newItemForm.price),
+          stockStatus: newItemForm.stockStatus,
+          stockCount: Number(newItemForm.stockCount),
+          prepTime: newItemForm.prepTime,
+          calories: Number(newItemForm.calories),
+          imageUrl: newItemForm.imageUrl,
+          featured: newItemForm.featured
+        };
+        const updatedDb = { ...db, menuItems: [created, ...db.menuItems] };
+        setDb(updatedDb);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedDb));
+        setIsModalOpen(false);
+        showToast(isRtl ? "تمت إضافة الصنف بنجاح إلى القائمة!" : "Item successfully added to menu!");
+      };
+
+      const handleSaveBanner = (e) => {
+        e.preventDefault();
+        const updatedBanners = db.banners.map((b) => (b.id === editingBanner.id ? editingBanner : b));
+        const updatedDb = { ...db, banners: updatedBanners };
+        setDb(updatedDb);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedDb));
+        setEditingBanner(null);
+        showToast(isRtl ? "تم حفظ تعديلات البانر بنجاح!" : "Banner updated successfully!");
+      };
+
+      return (
+        <div className={`min-h-screen bg-[#FAF8F5] text-chocolate-900 flex overflow-x-hidden max-w-[100vw] ${isRtl ? 'font-cairo' : 'font-sans'}`}>
+          {/* Fixed Sidebar */}
+          <aside className={`w-72 bg-chocolate-900 text-stone-300 flex flex-col fixed top-0 bottom-0 z-40 shadow-2xl ${
+            isRtl ? 'right-0 border-l border-chocolate-800' : 'left-0 border-r border-chocolate-800'
+          }`}>
+            <div className="p-6 border-b border-chocolate-800/80 bg-chocolate-950/50 flex flex-col items-center">
+              <Logo size="default" variant="light" showTagline={true} />
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1.5 custom-scrollbar text-xs font-semibold">
+              <button
+                onClick={() => setCurrentView('overview')}
+                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all ${
+                  currentView === 'overview' ? 'bg-gold-500 text-chocolate-950 font-bold shadow-gold-glow' : 'hover:bg-chocolate-800 text-stone-300'
+                }`}
+              >
+                <span>📊 {t('navOverview')}</span>
+              </button>
+
+              <button
+                onClick={() => setCurrentView('banners')}
+                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all ${
+                  currentView === 'banners' ? 'bg-gold-500 text-chocolate-950 font-bold shadow-gold-glow' : 'hover:bg-chocolate-800 text-stone-300'
+                }`}
+              >
+                <span>🖼️ {t('navBanners')}</span>
+                <span className="text-[10px] bg-chocolate-950/80 text-gold-300 px-2 py-0.5 rounded-full font-bold">3</span>
+              </button>
+
+              <div className="pt-3 pb-1 px-3 text-[10px] font-bold uppercase text-gold-500/70 tracking-wider">
+                {t('navMenuCatalog')}
+              </div>
+
+              <button
+                onClick={() => setCurrentView('menu-items')}
+                className={`w-full flex items-center px-3.5 py-2.5 rounded-xl transition-all ${
+                  currentView === 'menu-items' ? 'bg-gold-500 text-chocolate-950 font-bold shadow-gold-glow' : 'hover:bg-chocolate-800 text-stone-300'
+                }`}
+              >
+                <span>☕ {t('navMenuItems')}</span>
+              </button>
+
+              <button
+                onClick={() => setCurrentView('categories')}
+                className={`w-full flex items-center px-3.5 py-2.5 rounded-xl transition-all ${
+                  currentView === 'categories' ? 'bg-gold-500 text-chocolate-950 font-bold shadow-gold-glow' : 'hover:bg-chocolate-800 text-stone-300'
+                }`}
+              >
+                <span>📑 {t('navCategories')}</span>
+              </button>
+
+              <div className="pt-3 pb-1 px-3 text-[10px] font-bold uppercase text-gold-500/70 tracking-wider">
+                {t('navOperations')}
+              </div>
+
+              <button
+                onClick={() => setCurrentView('orders')}
+                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all ${
+                  currentView === 'orders' ? 'bg-gold-500 text-chocolate-950 font-bold shadow-gold-glow' : 'hover:bg-chocolate-800 text-stone-300'
+                }`}
+              >
+                <span>🛍️ {t('navOrders')}</span>
+                <span className="text-[10px] bg-gold-500 text-chocolate-950 font-black px-2 py-0.5 rounded-full">
+                  {db.orders.length}
+                </span>
+              </button>
+
+              <button
+                onClick={() => setCurrentView('points-coupons')}
+                className={`w-full flex items-center px-3.5 py-2.5 rounded-xl transition-all ${
+                  currentView === 'points-coupons' ? 'bg-gold-500 text-chocolate-950 font-bold shadow-gold-glow' : 'hover:bg-chocolate-800 text-stone-300'
+                }`}
+              >
+                <span>🎁 {t('navPointsCoupons')}</span>
+              </button>
+
+              <button
+                onClick={() => setCurrentView('facilities-rooms')}
+                className={`w-full flex items-center px-3.5 py-2.5 rounded-xl transition-all ${
+                  currentView === 'facilities-rooms' ? 'bg-gold-500 text-chocolate-950 font-bold shadow-gold-glow' : 'hover:bg-chocolate-800 text-stone-300'
+                }`}
+              >
+                <span>🚪 {t('navFacilitiesRooms')}</span>
+              </button>
+
+              <button
+                onClick={() => setCurrentView('reviews')}
+                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all ${
+                  currentView === 'reviews' ? 'bg-gold-500 text-chocolate-950 font-bold shadow-gold-glow' : 'hover:bg-chocolate-800 text-stone-300'
+                }`}
+              >
+                <span>⭐ {t('navReviews')}</span>
+                <span className="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-2 py-0.5 rounded-full">
+                  {db.kpiStats.averageRating}★
+                </span>
+              </button>
+
+              <div className="pt-3 pb-1 px-3 text-[10px] font-bold uppercase text-gold-500/70 tracking-wider">
+                {t('navAdminGroup')}
+              </div>
+
+              <button
+                onClick={() => setCurrentView('cafe-info')}
+                className={`w-full flex items-center px-3.5 py-2.5 rounded-xl transition-all ${
+                  currentView === 'cafe-info' ? 'bg-gold-500 text-chocolate-950 font-bold shadow-gold-glow' : 'hover:bg-chocolate-800 text-stone-300'
+                }`}
+              >
+                <span>🏪 {t('navCafeInfo')}</span>
+              </button>
+            </div>
+
+            {/* Bottom Profile */}
+            <div className="p-4 border-t border-chocolate-800 bg-chocolate-950/60 flex items-center justify-between">
+              <div className="flex items-center space-x-3 rtl:space-x-reverse">
+                <img
+                  src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=80&q=80"
+                  className="w-9 h-9 rounded-full border border-gold-400 object-cover"
+                />
+                <div>
+                  <p className="text-xs font-bold text-white">{isRtl ? 'تيتو (المدير)' : 'Tito (Admin)'}</p>
+                  <p className="text-[10px] text-gold-400 font-medium">{t('superAdmin')}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  localStorage.removeItem(STORAGE_KEY);
+                  setDb(JSON.parse(JSON.stringify(initialSeed)));
+                  showToast(isRtl ? "تمت استعادة البيانات الافتراضية!" : "Demo reset to default seed data!");
+                }}
+                className="text-[11px] text-stone-400 hover:text-gold-300 bg-chocolate-800 px-2 py-1 rounded-lg"
+                title={t('resetSeed')}
+              >
+                🔄
+              </button>
+            </div>
+          </aside>
+
+          {/* Main Content Area */}
+          <div className={`flex-1 min-w-0 flex flex-col min-h-screen transition-all duration-300 ${
+            isRtl ? 'mr-72' : 'ml-72'
+          }`}>
+            {/* Top Header */}
+            <header className="h-20 bg-white/95 backdrop-blur-md border-b border-stone-200/80 sticky top-0 z-30 px-6 sm:px-8 flex items-center justify-between gap-4 w-full">
+              {/* Title & Status */}
+              <div className="flex items-center space-x-3 rtl:space-x-reverse shrink-0">
+                <div>
+                  <h1 className="text-xl sm:text-2xl font-black text-chocolate-900">
+                    {t('welcomeAdmin')}
+                  </h1>
+                  <p className="text-xs text-stone-500">
+                    {t('cafeName')} • {t('branchOpen')}
+                  </p>
+                </div>
+              </div>
+
+              {/* Center Global Search with correct RTL/LTR padding */}
+              <div className="hidden md:flex flex-1 max-w-md mx-4">
+                <div className="relative w-full">
+                  <input
+                    type="text"
+                    placeholder={t('searchPlaceholder')}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className={`w-full py-2.5 text-xs bg-stone-100/90 hover:bg-stone-100 focus:bg-white rounded-xl border border-stone-200 focus:outline-none focus:border-gold-500 transition-all ${
+                      isRtl ? 'pr-11 pl-4' : 'pl-11 pr-4'
+                    }`}
+                  />
+                  <span className={`absolute top-1/2 transform -translate-y-1/2 pointer-events-none text-stone-400 text-xs ${
+                    isRtl ? 'right-3.5' : 'left-3.5'
+                  }`}>
+                    🔍
+                  </span>
+                </div>
+              </div>
+
+              {/* Actions & Language Switcher */}
+              <div className="flex items-center space-x-3 rtl:space-x-reverse shrink-0">
+                {/* Language Switcher Toggle */}
+                <button
+                  onClick={handleToggleLang}
+                  className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-chocolate-900 hover:text-gold-700 bg-cream-100 hover:bg-cream-200 border border-stone-200 rounded-xl transition-all shadow-sm"
+                  title={isRtl ? "Switch to English" : "التحويل للغة العربية"}
+                >
+                  <span className="text-sm">🌐</span>
+                  <span className="font-extrabold">{lang === 'en' ? 'العربية' : 'EN'}</span>
+                </button>
+
+                <button
+                  onClick={() => showToast(isRtl ? "لا توجد تنبيهات جديدة" : "No new alerts")}
+                  className="p-2.5 bg-stone-100 hover:bg-gold-50 text-chocolate-800 rounded-xl border border-stone-200"
+                >
+                  🔔
+                </button>
+
+                <div className="flex items-center space-x-2.5 rtl:space-x-reverse p-1.5 rounded-xl border border-stone-200 bg-stone-50">
+                  <img
+                    src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=80&q=80"
+                    className="w-8 h-8 rounded-full border border-gold-400 object-cover"
+                  />
+                  <span className="text-xs font-bold text-chocolate-900 hidden lg:inline-block">
+                    {isRtl ? 'تيتو' : 'Tito'}
+                  </span>
+                </div>
+              </div>
+            </header>
+
+            {/* Viewport Container */}
+            <main className="p-6 sm:p-8 flex-1 min-w-0 animate-fade-in">
+              {/* OVERVIEW VIEW */}
+              {currentView === 'overview' && (
+                <div className="space-y-6 w-full">
+                  {/* Hero Banner */}
+                  <div className="bg-gradient-to-r from-chocolate-950 via-chocolate-900 to-chocolate-800 text-white rounded-3xl p-6 sm:p-7 shadow-luxury relative overflow-hidden w-full border border-chocolate-700/60">
+                    <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5">
+                      <div className="max-w-2xl space-y-2">
+                        <span className="px-3 py-1 rounded-full bg-gold-500/20 text-gold-300 text-xs font-bold uppercase tracking-wider border border-gold-500/30 inline-block">
+                          ✨ {t('intelligenceBadge')}
+                        </span>
+                        <h2 className="text-2xl sm:text-3xl font-black">{t('overviewHeading')}</h2>
+                        <p className="text-xs sm:text-sm text-stone-300 leading-relaxed">
+                          {t('overviewDesc')}
+                        </p>
+                      </div>
+
+                      {/* Both Buttons Yellow/Gold */}
+                      <div className="flex items-center gap-3 shrink-0">
+                        <button
+                          onClick={() => setCurrentView('orders')}
+                          className="flex items-center gap-2 px-4 py-2.5 bg-gold-500 hover:bg-gold-400 text-chocolate-950 font-bold text-xs rounded-xl shadow-gold-glow transition-all"
+                        >
+                          <span>🛍️</span>
+                          <span>{t('liveOrdersBtn')} ({db.orders.length})</span>
+                        </button>
+                        <button
+                          onClick={() => setCurrentView('menu-items')}
+                          className="flex items-center gap-2 px-4 py-2.5 bg-gold-500 hover:bg-gold-400 text-chocolate-950 font-bold text-xs rounded-xl shadow-gold-glow transition-all"
+                        >
+                          <span>☕</span>
+                          <span>{t('manageMenuBtn')}</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 4 KPI Cards */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5 w-full">
+                    <div className="bg-white p-6 rounded-2xl border border-stone-200 shadow-card">
+                      <span className="text-xs font-bold uppercase text-stone-400">{t('totalGrossRevenue')}</span>
+                      <p className="text-2xl sm:text-3xl font-black text-chocolate-900 mt-1 font-mono">EGP 284,500</p>
+                      <span className="text-xs text-emerald-700 font-bold mt-2 inline-block">+18.6% {isRtl ? 'هذا الشهر' : 'vs last month'}</span>
+                    </div>
+                    <div className="bg-white p-6 rounded-2xl border border-stone-200 shadow-card">
+                      <span className="text-xs font-bold uppercase text-stone-400">{t('totalOrders')}</span>
+                      <p className="text-2xl sm:text-3xl font-black text-chocolate-900 mt-1 font-mono">2,140</p>
+                      <span className="text-xs text-emerald-700 font-bold mt-2 inline-block">+14.2% {isRtl ? 'مكتمل' : 'completed'}</span>
+                    </div>
+                    <div className="bg-white p-6 rounded-2xl border border-stone-200 shadow-card">
+                      <span className="text-xs font-bold uppercase text-stone-400">{t('activeLoyaltyMembers')}</span>
+                      <p className="text-2xl sm:text-3xl font-black text-chocolate-900 mt-1 font-mono">4,890</p>
+                      <span className="text-xs text-gold-700 font-bold mt-2 inline-block">{isRtl ? 'في برنامج نقاط 90°' : 'Active 90° Points'}</span>
+                    </div>
+                    <div className="bg-white p-6 rounded-2xl border border-stone-200 shadow-card">
+                      <span className="text-xs font-bold uppercase text-stone-400">{t('guestSatisfaction')}</span>
+                      <p className="text-2xl sm:text-3xl font-black text-chocolate-900 mt-1">4.9 ★</p>
+                      <span className="text-xs text-stone-500 font-bold mt-2 inline-block">328 {isRtl ? 'تقييم موثق' : 'verified reviews'}</span>
+                    </div>
+                  </div>
+
+                  {/* Revenue Bar Visual & Top Items */}
+                  <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 w-full">
+                    <div className="xl:col-span-2 bg-white p-6 rounded-3xl border border-stone-200 shadow-card space-y-4">
+                      <div className="flex justify-between items-center pb-3 border-b border-stone-100">
+                        <h3 className="font-bold text-chocolate-900 text-base">{t('revenueTrends')}</h3>
+                        <span className="text-xs font-bold text-gold-600">
+                          {isRtl ? 'الذروة: الجمعة 68,900 ج.م' : 'Peak: Friday EGP 68,900'}
+                        </span>
+                      </div>
+                      <div className="h-56 flex items-end gap-4 pt-6 pb-2 px-4">
+                        {db.weeklyRevenue.map((d) => (
+                          <div key={d.nameEn} className="flex-1 flex flex-col items-center gap-2 group">
+                            <span className="text-[11px] font-bold text-stone-400 group-hover:text-chocolate-900 font-mono">
+                              {(d.revenue / 1000).toFixed(0)}k
+                            </span>
+                            <div
+                              className="w-full bg-gold-500 rounded-t-xl group-hover:bg-gold-600 transition-all shadow-sm"
+                              style={{ height: `${(d.revenue / 70000) * 160}px` }}
+                            />
+                            <span className="text-xs font-bold text-chocolate-900">
+                              {isRtl ? d.nameAr : d.nameEn}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="bg-white p-6 rounded-3xl border border-stone-200 shadow-card space-y-4 flex flex-col justify-between">
+                      <div>
+                        <h3 className="font-bold text-chocolate-900 pb-3 border-b border-stone-100 text-base">
+                          {t('topSignatureItems')}
+                        </h3>
+                        <div className="space-y-3 pt-2">
+                          {db.menuItems.slice(0, 3).map((item) => (
+                            <div key={item.id} className="flex items-center gap-3 p-2.5 rounded-2xl bg-cream-50 hover:bg-cream-100 transition-colors">
+                              <img src={item.imageUrl} className="w-12 h-12 rounded-xl object-cover border border-stone-200" />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-bold text-chocolate-900 truncate">
+                                  {isRtl && item.nameAr ? item.nameAr : item.name}
+                                </p>
+                                <p className="text-[11px] text-gold-700 font-bold font-mono">EGP {item.price}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setCurrentView('menu-items')}
+                        className="w-full py-2.5 text-xs font-bold text-chocolate-800 bg-cream-100 hover:bg-cream-200 rounded-xl border border-stone-200 transition-colors"
+                      >
+                        {isRtl ? 'تصفح قائمة الطعام الكاملة' : 'Browse Complete Menu'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Live Orders Strip */}
+                  <div className="bg-white p-6 rounded-3xl border border-stone-200 shadow-card w-full space-y-4">
+                    <div className="flex justify-between items-center pb-3 border-b border-stone-100">
+                      <h3 className="font-bold text-chocolate-900 text-base">{t('liveOrdersTitle')}</h3>
+                      <button
+                        onClick={() => setCurrentView('orders')}
+                        className="text-xs font-bold text-gold-600 hover:text-gold-700 hover:underline"
+                      >
+                        {t('viewAllOrders')} →
+                      </button>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-start text-xs">
+                        <thead className="bg-cream-50 text-chocolate-800 font-bold uppercase text-[10px]">
+                          <tr>
+                            <th className="p-3.5 rounded-s-xl">{t('orderId')}</th>
+                            <th className="p-3.5">{t('customer')}</th>
+                            <th className="p-3.5">{t('diningType')}</th>
+                            <th className="p-3.5">{t('total')}</th>
+                            <th className="p-3.5">{t('status')}</th>
+                            <th className="p-3.5 rounded-e-xl text-end">{t('actions')}</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-stone-100">
+                          {db.orders.map((o) => (
+                            <tr key={o.id} className="hover:bg-cream-50/50">
+                              <td className="p-3.5 font-mono font-bold text-chocolate-900">#{o.orderNumber}</td>
+                              <td className="p-3.5 font-bold text-chocolate-900">{o.customerName}</td>
+                              <td className="p-3.5 text-stone-600">{isRtl && o.diningTypeAr ? o.diningTypeAr : o.diningType}</td>
+                              <td className="p-3.5 font-bold text-chocolate-900 font-mono">EGP {o.totalPrice}</td>
+                              <td className="p-3.5">
+                                <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-gold-50 text-gold-800 border border-gold-300">
+                                  {isRtl && o.statusAr ? o.statusAr : o.status}
+                                </span>
+                              </td>
+                              <td className="p-3.5 text-end">
+                                <button
+                                  onClick={() => setSelectedOrder(o)}
+                                  className="px-3 py-1.5 text-xs font-bold text-gold-700 bg-cream-100 hover:bg-gold-50 rounded-lg border border-stone-200"
+                                >
+                                  {t('viewReceipt')}
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* MENU ITEMS VIEW */}
+              {currentView === 'menu-items' && (
+                <div className="space-y-6 w-full">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-stone-200 shadow-sm w-full">
+                    <div>
+                      <h2 className="text-xl font-black text-chocolate-900">{t('navMenuItems')}</h2>
+                      <p className="text-xs text-stone-500 mt-0.5">{db.menuItems.length} {isRtl ? 'صنف مسجل في القائمة' : 'items listed'}</p>
+                    </div>
+                    <button
+                      onClick={() => setIsModalOpen(true)}
+                      className="px-5 py-2.5 bg-gold-500 hover:bg-gold-600 text-chocolate-950 font-bold text-xs rounded-xl shadow-gold-glow transition-all"
+                    >
+                      + {t('addNewItem')}
+                    </button>
+                  </div>
+
+                  <div className="bg-white rounded-3xl border border-stone-200 shadow-card overflow-hidden w-full">
+                    <table className="w-full text-start text-xs">
+                      <thead className="bg-cream-50 text-chocolate-800 font-bold uppercase tracking-wider text-[10px] border-b border-stone-200">
+                        <tr>
+                          <th className="p-4">{isRtl ? 'الصنف والمواصفات' : 'Item Details'}</th>
+                          <th className="p-4">{t('category')}</th>
+                          <th className="p-4">{t('priceEgp')}</th>
+                          <th className="p-4">{t('stockStatus')}</th>
+                          <th className="p-4">{t('prepTime')}</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-stone-100">
+                        {db.menuItems.map((item) => (
+                          <tr key={item.id} className="hover:bg-cream-50/50 transition-colors">
+                            <td className="p-4 flex items-center gap-3.5">
+                              <img src={item.imageUrl} className="w-12 h-12 rounded-xl object-cover border border-stone-200" />
+                              <div>
+                                <p className="font-bold text-chocolate-900 text-sm">
+                                  {isRtl && item.nameAr ? item.nameAr : item.name}
+                                </p>
+                                <p className="text-[11px] text-stone-400">
+                                  {isRtl ? item.name : (item.nameAr || '')}
+                                </p>
+                              </div>
+                            </td>
+                            <td className="p-4 font-semibold text-chocolate-700">
+                              <span className="bg-cream-100 px-2.5 py-1 rounded-lg border border-cream-200">
+                                {isRtl && item.categoryAr ? item.categoryAr : item.category}
+                              </span>
+                            </td>
+                            <td className="p-4 font-bold text-chocolate-900 text-sm font-mono">EGP {item.price}</td>
+                            <td className="p-4">
+                              <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
+                                item.stockStatus === 'in_stock' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'
+                              }`}>
+                                {item.stockStatus === 'in_stock' ? (isRtl ? `متوفر (${item.stockCount})` : `In Stock (${item.stockCount})`) : t('lowStock')}
+                              </span>
+                            </td>
+                            <td className="p-4 text-stone-500 font-medium">{item.prepTime}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* BANNERS VIEW */}
+              {currentView === 'banners' && (
+                <div className="space-y-6 w-full">
+                  <div className="flex justify-between items-center bg-white p-6 rounded-3xl border border-stone-200 shadow-sm w-full">
+                    <div>
+                      <h2 className="text-xl font-black text-chocolate-900">{t('navBanners')}</h2>
+                      <p className="text-xs text-stone-500">{t('appBannersPromoDesc')}</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
+                    {db.banners.map((b) => (
+                      <div key={b.id} className="bg-white rounded-3xl border border-stone-200 overflow-hidden shadow-card hover:shadow-luxury transition-all flex flex-col justify-between">
+                        <div>
+                          <img src={b.imageUrl} className="h-48 w-full object-cover" />
+                          <div className="p-6 space-y-2">
+                            <span className="text-[10px] font-black uppercase tracking-wider bg-gold-500 text-chocolate-950 px-2.5 py-1 rounded-md">
+                              {b.badge}
+                            </span>
+                            <h4 className="text-base font-bold text-chocolate-900">
+                              {isRtl && b.titleAr ? b.titleAr : b.title}
+                            </h4>
+                            <p className="text-xs text-stone-500 leading-relaxed">{b.subtitle}</p>
+                          </div>
+                        </div>
+                        <div className="p-6 pt-0">
+                          <button
+                            onClick={() => setEditingBanner(b)}
+                            className="w-full py-2 bg-stone-100 hover:bg-gold-50 hover:text-gold-800 text-chocolate-900 font-bold text-xs rounded-xl border border-stone-200 transition-colors"
+                          >
+                            ✏️ {t('editItem')}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* ORDERS VIEW */}
+              {currentView === 'orders' && (
+                <div className="space-y-6 w-full">
+                  <div className="flex justify-between items-center bg-white p-6 rounded-3xl border border-stone-200 shadow-sm w-full">
+                    <div>
+                      <h2 className="text-xl font-black text-chocolate-900">{t('navOrders')}</h2>
+                      <p className="text-xs text-stone-500">{db.orders.length} {isRtl ? 'تذاكر قيد المتابعة' : 'active order tickets'}</p>
+                    </div>
+                  </div>
+                  <div className="bg-white rounded-3xl border border-stone-200 shadow-card overflow-hidden w-full">
+                    <table className="w-full text-start text-xs">
+                      <thead className="bg-cream-50 text-chocolate-800 font-bold uppercase tracking-wider text-[10px] border-b border-stone-200">
+                        <tr>
+                          <th className="p-4">{t('orderId')}</th>
+                          <th className="p-4">{t('customer')}</th>
+                          <th className="p-4">{t('diningType')}</th>
+                          <th className="p-4">{t('total')}</th>
+                          <th className="p-4">{t('status')}</th>
+                          <th className="p-4 text-end">{t('actions')}</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-stone-100">
+                        {db.orders.map((o) => (
+                          <tr key={o.id} className="hover:bg-cream-50/50">
+                            <td className="p-4 font-mono font-bold text-chocolate-900">#{o.orderNumber}</td>
+                            <td className="p-4 font-bold text-chocolate-900">{o.customerName}</td>
+                            <td className="p-4 text-stone-600">{isRtl && o.diningTypeAr ? o.diningTypeAr : o.diningType}</td>
+                            <td className="p-4 font-bold text-chocolate-900 font-mono">EGP {o.totalPrice}</td>
+                            <td className="p-4">
+                              <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-gold-50 text-gold-800 border border-gold-300">
+                                {isRtl && o.statusAr ? o.statusAr : o.status}
+                              </span>
+                            </td>
+                            <td className="p-4 text-end">
+                              <button
+                                onClick={() => setSelectedOrder(o)}
+                                className="px-3 py-1.5 text-xs font-bold text-gold-700 bg-cream-100 hover:bg-gold-50 rounded-lg border border-stone-200"
+                              >
+                                {t('viewReceipt')}
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* FACILITIES & ROOMS VIEW */}
+              {currentView === 'facilities-rooms' && (
+                <div className="space-y-6 w-full">
+                  <h2 className="text-xl font-black text-chocolate-900">{t('navFacilitiesRooms')}</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+                    {db.rooms.map((r) => (
+                      <div key={r.id} className="bg-white rounded-3xl border border-stone-200 overflow-hidden shadow-card">
+                        <img src={r.imageUrl} className="h-52 w-full object-cover" />
+                        <div className="p-6 space-y-3">
+                          <div className="flex justify-between items-center">
+                            <h4 className="font-bold text-chocolate-900 text-lg">
+                              {isRtl && r.nameAr ? r.nameAr : r.name}
+                            </h4>
+                            <span className="text-sm font-black text-gold-600 font-mono">EGP {r.hourlyRate} / {isRtl ? 'ساعة' : 'hr'}</span>
+                          </div>
+                          <p className="text-xs text-stone-500 leading-relaxed">{isRtl ? r.descAr : r.name}</p>
+                          <span className="inline-block text-xs font-bold text-chocolate-800 bg-cream-100 px-3 py-1 rounded-lg">
+                            👥 {isRtl ? `تتسع حتى ${r.capacity} أفراد` : `Up to ${r.capacity} guests`}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* POINTS & COUPONS VIEW */}
+              {currentView === 'points-coupons' && (
+                <div className="space-y-6 w-full">
+                  <h2 className="text-xl font-black text-chocolate-900">{t('navPointsCoupons')}</h2>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
+                    {db.coupons.map((c) => (
+                      <div key={c.id} className="bg-white p-6 rounded-3xl border border-stone-200 shadow-card space-y-3">
+                        <span className="font-mono text-base font-black text-chocolate-900 bg-cream-100 px-3 py-1.5 rounded-xl border border-stone-200">
+                          {c.code}
+                        </span>
+                        <p className="text-2xl font-black text-gold-600 font-mono">{c.discountValue} OFF</p>
+                        <p className="text-xs text-stone-500">
+                          {isRtl ? `حد أدنى للطلب: ${c.minOrder} ج.م` : `Min order: EGP ${c.minOrder}`} • {c.validUntil}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* REVIEWS & COMMENTS VIEW */}
+              {currentView === 'reviews' && (
+                <div className="space-y-6 w-full animate-fade-in">
+                  <div className="flex justify-between items-center bg-white p-6 rounded-3xl border border-stone-200 shadow-sm w-full">
+                    <div>
+                      <h2 className="text-xl font-black text-chocolate-900">{t('reviewsTitle', 'التعليقات')}</h2>
+                      <p className="text-xs text-stone-500">{t('reviewsDesc', 'عرض وإدارة تعليقات وتقييمات العملاء والرد عليها لحظياً.')}</p>
+                    </div>
+                  </div>
+
+                  {/* 4 Interactive KPI Cards */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
+                    <div
+                      onClick={() => setReviewFilter('all')}
+                      className={`p-5 rounded-3xl border transition-all cursor-pointer ${
+                        reviewFilter === 'all' ? 'bg-gradient-to-br from-gold-50/40 via-white to-white border-gold-500 ring-2 ring-gold-500/30 shadow-gold-glow' : 'bg-white border-stone-200 hover:border-gold-300'
+                      }`}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="text-xs font-bold text-stone-500">{t('totalCommentsCard')}</p>
+                          <h3 className="text-3xl font-black text-chocolate-900 font-mono mt-1">128</h3>
+                        </div>
+                        <span className="p-3 bg-stone-100 text-chocolate-900 rounded-2xl text-xl">💬</span>
+                      </div>
+                      <p className="text-xs font-bold text-gold-700 mt-3 pt-2 border-t border-stone-100">{reviewFilter === 'all' ? (isRtl ? '● معروضة حالياً' : '● Active') : (isRtl ? 'انقر للعرض' : 'Click to View')}</p>
+                    </div>
+
+                    <div
+                      onClick={() => setReviewFilter('new')}
+                      className={`p-5 rounded-3xl border transition-all cursor-pointer ${
+                        reviewFilter === 'new' ? 'bg-gradient-to-br from-emerald-50/40 via-white to-white border-emerald-500 ring-2 ring-emerald-500/30 shadow-card' : 'bg-white border-stone-200 hover:border-emerald-300'
+                      }`}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="text-xs font-bold text-stone-500">{t('newCommentsCard')}</p>
+                          <h3 className="text-3xl font-black text-emerald-600 font-mono mt-1">18</h3>
+                        </div>
+                        <span className="p-3 bg-emerald-50 text-emerald-600 rounded-2xl text-xl">✨</span>
+                      </div>
+                      <p className="text-xs font-bold text-emerald-700 mt-3 pt-2 border-t border-stone-100">{reviewFilter === 'new' ? (isRtl ? '● معروضة حالياً' : '● Active') : (isRtl ? 'انقر للعرض' : 'Click to View')}</p>
+                    </div>
+
+                    <div
+                      onClick={() => setReviewFilter('pending')}
+                      className={`p-5 rounded-3xl border transition-all cursor-pointer ${
+                        reviewFilter === 'pending' ? 'bg-gradient-to-br from-amber-50/40 via-white to-white border-amber-500 ring-2 ring-amber-500/30 shadow-card' : 'bg-white border-stone-200 hover:border-amber-300'
+                      }`}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="text-xs font-bold text-stone-500">{t('pendingReplyCard')}</p>
+                          <h3 className="text-3xl font-black text-amber-600 font-mono mt-1">36</h3>
+                        </div>
+                        <span className="p-3 bg-amber-50 text-amber-600 rounded-2xl text-xl">🕒</span>
+                      </div>
+                      <p className="text-xs font-bold text-amber-700 mt-3 pt-2 border-t border-stone-100">{t('viewAllAction')} {isRtl ? '←' : '→'}</p>
+                    </div>
+
+                    <div
+                      onClick={() => setReviewFilter('replied')}
+                      className={`p-5 rounded-3xl border transition-all cursor-pointer ${
+                        reviewFilter === 'replied' ? 'bg-gradient-to-br from-blue-50/40 via-white to-white border-blue-500 ring-2 ring-blue-500/30 shadow-card' : 'bg-white border-stone-200 hover:border-blue-300'
+                      }`}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="text-xs font-bold text-stone-500">{t('repliedCard')}</p>
+                          <h3 className="text-3xl font-black text-blue-600 font-mono mt-1">92</h3>
+                        </div>
+                        <span className="p-3 bg-blue-50 text-blue-600 rounded-2xl text-xl">↩️</span>
+                      </div>
+                      <p className="text-xs font-bold text-blue-700 mt-3 pt-2 border-t border-stone-100">{t('viewAllAction')} {isRtl ? '←' : '→'}</p>
+                    </div>
+                  </div>
+
+                  {/* Filtered list */}
+                  <div className="space-y-4">
+                    {db.reviews
+                      .filter(r => {
+                        if (reviewFilter === 'new') return r.id % 2 === 1;
+                        if (reviewFilter === 'pending') return r.id % 2 === 1;
+                        if (reviewFilter === 'replied') return r.id % 2 === 0;
+                        return true;
+                      })
+                      .map((rev) => (
+                        <div key={rev.id} className="bg-white p-6 rounded-3xl border border-stone-200 shadow-card space-y-2.5 w-full">
+                          <div className="flex justify-between items-center">
+                            <h4 className="font-bold text-chocolate-900">{rev.customerName}</h4>
+                            <span className="text-gold-500 font-bold tracking-widest">★★★★★</span>
+                          </div>
+                          <p className="text-xs sm:text-sm text-stone-700 leading-relaxed">"{rev.comment}"</p>
+                          <span className="text-[11px] text-stone-400 block font-mono">{rev.date}</span>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
+
+              {/* CAFE INFO VIEW */}
+              {currentView === 'cafe-info' && (
+                <div className="bg-white p-8 rounded-3xl border border-stone-200 shadow-card space-y-4 max-w-3xl w-full">
+                  <h2 className="text-xl font-black text-chocolate-900">{t('navCafeInfo')}</h2>
+                  <div className="space-y-3 text-xs sm:text-sm">
+                    <p><strong>{isRtl ? 'المقر والعنوان:' : 'Address:'}</strong> {db.cafeInfo.address}</p>
+                    <p><strong>{isRtl ? 'الخط الساخن:' : 'Hotline:'}</strong> <span className="font-mono">{db.cafeInfo.phone}</span></p>
+                    <p><strong>{isRtl ? 'مواعيد العمل:' : 'Hours:'}</strong> <span className="font-mono">{db.cafeInfo.openingTimeWeekday} - {db.cafeInfo.closingTimeWeekday}</span></p>
+                    <p><strong>{isRtl ? 'ضريبة القيمة المضافة:' : 'VAT Rate:'}</strong> {db.cafeInfo.taxRate}%</p>
+                  </div>
+                </div>
+              )}
+
+              {/* AI AGENT PREVIEW */}
+              {currentView === 'ai-agent' && (
+                <div className="space-y-6 w-full animate-fade-in">
+                  <div className="p-6 rounded-3xl bg-gradient-to-br from-chocolate-950 via-chocolate-900 to-chocolate-950 text-white border border-gold-500/40 shadow-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                    <div>
+                      <span className="px-3 py-1 rounded-full bg-gold-500/20 text-gold-300 text-xs font-mono font-bold">CAFE 90 • AI INTELLIGENCE</span>
+                      <h2 className="text-xl font-black mt-2 flex items-center gap-2">
+                        <span>🤖</span> {isRtl ? 'وكيل ومحرك الذكاء الاصطناعي لكافيه 90' : 'Cafe 90 Smart AI Agent & Engine'}
+                      </h2>
+                      <p className="text-xs text-stone-300 mt-1">
+                        {isRtl ? 'إدارة التوصيات التلقائية، منتجات السلة التكميلية، وباقات الكومبو الذكية.' : 'Manage automated recommendations, cart cross-sells, and smart combos.'}
+                      </p>
+                    </div>
+                    <span className="px-3 py-1.5 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-bold flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                      {isRtl ? 'الوكيل نشط ومتزامن' : 'AI Agent Active'}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="bg-white p-5 rounded-3xl border border-stone-200 shadow-card">
+                      <p className="text-xs text-stone-400 font-bold uppercase">{isRtl ? 'خوارزمية التوصيات' : 'Algorithm'}</p>
+                      <p className="text-sm font-black text-chocolate-900 mt-1">{isRtl ? 'الأعلى ربحية + تكاملي' : 'High Margin + Pairing'}</p>
+                      <p className="text-xs text-emerald-600 font-bold mt-2">✓ 96% Match Accuracy</p>
+                    </div>
+                    <div className="bg-white p-5 rounded-3xl border border-stone-200 shadow-card">
+                      <p className="text-xs text-stone-400 font-bold uppercase">{isRtl ? 'باقات الكومبو الذكية' : 'Smart Combos'}</p>
+                      <p className="text-sm font-black text-chocolate-900 mt-1">{isRtl ? '3 عروض نشطة بالتطبيق' : '3 Active Combos'}</p>
+                      <p className="text-xs text-gold-600 font-bold mt-2">⚡ +34% Cross-sell Lift</p>
+                    </div>
+                    <div className="bg-white p-5 rounded-3xl border border-stone-200 shadow-card">
+                      <p className="text-xs text-stone-400 font-bold uppercase">{isRtl ? 'استيراد CSV الذكي' : 'CSV Smart Ingestion'}</p>
+                      <p className="text-sm font-black text-chocolate-900 mt-1">{isRtl ? 'مطابقة آلية جاهزة' : 'Auto-Mapping Ready'}</p>
+                      <p className="text-xs text-cyan-600 font-bold mt-2">✨ UTF-8 Drag & Drop</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </main>
+          </div>
+
+          {/* PREMIUM LUXURY REDESIGNED MODAL FOR ADDING MENU ITEM */}
+          {isModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/40 animate-fade-in">
+              <div className="fixed inset-0" onClick={() => setIsModalOpen(false)} />
+              
+              <div className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-gold-500/20 my-auto z-10 flex flex-col max-h-[88vh] overflow-hidden animate-scale-up">
+                {/* Header with Coffee Icon & Badge */}
+                <div className="flex items-center justify-between px-7 py-5 border-b border-stone-100 bg-gradient-to-r from-cream-50 via-white to-cream-50 shrink-0">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl bg-gold-500/10 border border-gold-500/30 flex items-center justify-center text-gold-600 shadow-sm">
+                      <span className="text-xl">☕</span>
+                    </div>
+                    <div>
+                      <h3 className="text-base sm:text-lg font-black text-chocolate-900 tracking-tight">
+                        {isRtl ? 'إضافة صنف جديد للقائمة' : 'Create New Menu Item'}
+                      </h3>
+                      <p className="text-xs text-stone-500 mt-0.5">
+                        {isRtl ? 'تحديد مواصفات الصنف، السعر بالجنيه، والمخزون بهوية كافيه 90' : 'Configure product attributes, EGP pricing, and stock details'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => setIsModalOpen(false)}
+                    className="w-9 h-9 rounded-full flex items-center justify-center text-stone-400 hover:text-chocolate-900 hover:bg-chocolate-900/10 transition-colors shrink-0"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                {/* Form Body - Sectioned Grouped Layout */}
+                <form id="createItemForm" onSubmit={handleSaveNewItem} className="px-7 py-5 overflow-y-auto flex-1 space-y-5 custom-scrollbar text-xs sm:text-sm">
+                  {/* SECTION 1: Basic Info Card */}
+                  <div className="bg-[#FAF8F5] p-4 sm:p-5 rounded-2xl border border-[#2C180E]/10 space-y-3.5">
+                    <div className="flex items-center gap-2 pb-2 border-b border-stone-200/60 text-xs font-bold text-chocolate-900">
+                      <span className="text-gold-600">🏷️</span>
+                      <span>{isRtl ? 'المعلومات الأساسية والتصنيف' : 'Basic Information & Category'}</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                      <div>
+                        <label className="block text-xs font-bold text-chocolate-900 mb-1.5">
+                          {isRtl ? 'اسم الصنف (بالإنجليزية)' : 'Item Name (English)'} <span className="text-gold-500 font-bold">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={newItemForm.name}
+                          onChange={(e) => setNewItemForm({ ...newItemForm, name: e.target.value })}
+                          placeholder="e.g. 90° Signature Spanish Latte"
+                          className="w-full bg-white border border-[#2C180E]/15 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-chocolate-900 placeholder:text-stone-400 focus:border-gold-500 focus:ring-2 focus:ring-gold-500/20 focus:bg-white outline-none transition-all"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-chocolate-900 mb-1.5">
+                          {isRtl ? 'اسم الصنف (بالعربية)' : 'Item Name (Arabic)'}
+                        </label>
+                        <input
+                          type="text"
+                          value={newItemForm.nameAr}
+                          onChange={(e) => setNewItemForm({ ...newItemForm, nameAr: e.target.value })}
+                          placeholder="مثال: سبانش لاتيه 90 الذهبي"
+                          className="w-full bg-white border border-[#2C180E]/15 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-chocolate-900 placeholder:text-stone-400 focus:border-gold-500 focus:ring-2 focus:ring-gold-500/20 focus:bg-white outline-none transition-all"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-chocolate-900 mb-1.5">
+                        {isRtl ? 'القسم الرئيسي' : 'Main Category'} <span className="text-gold-500 font-bold">*</span>
+                      </label>
+                      <select
+                        value={newItemForm.category}
+                        onChange={(e) => setNewItemForm({ ...newItemForm, category: e.target.value })}
+                        className="w-full bg-white border border-[#2C180E]/15 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-chocolate-900 focus:border-gold-500 focus:ring-2 focus:ring-gold-500/20 outline-none transition-all cursor-pointer"
+                      >
+                        <option value="Signature 90° Blends">{isRtl ? 'مشروبات 90 المميزة' : 'Signature 90° Blends'}</option>
+                        <option value="Specialty Hot Coffee">{isRtl ? 'القهوة المختصة الساخنة' : 'Specialty Hot Coffee'}</option>
+                        <option value="Cold Brew & Iced Coffee">{isRtl ? 'القهوة المثلجة والمقطرة' : 'Cold Brew & Iced Coffee'}</option>
+                        <option value="Artisan Bakery & Pastries">{isRtl ? 'المخبوزات والحلويات' : 'Artisan Bakery & Pastries'}</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* SECTION 2: Pricing, Stock & Specs */}
+                  <div className="bg-[#FAF8F5] p-4 sm:p-5 rounded-2xl border border-[#2C180E]/10 space-y-3.5">
+                    <div className="flex items-center gap-2 pb-2 border-b border-stone-200/60 text-xs font-bold text-chocolate-900">
+                      <span className="text-gold-600">💰</span>
+                      <span>{isRtl ? 'التسعير، المخزون، والمواصفات' : 'Pricing, Inventory & Specifications'}</span>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      <div>
+                        <label className="block text-xs font-bold text-chocolate-900 mb-1.5">
+                          {isRtl ? 'سعر البيع (ج.م)' : 'Price (EGP)'} <span className="text-gold-500 font-bold">*</span>
+                        </label>
+                        <input
+                          type="number"
+                          required
+                          min="0"
+                          value={newItemForm.price}
+                          onChange={(e) => setNewItemForm({ ...newItemForm, price: e.target.value })}
+                          placeholder="145"
+                          className="w-full bg-white border border-[#2C180E]/15 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-bold font-mono text-chocolate-900 focus:border-gold-500 focus:ring-2 focus:ring-gold-500/20 outline-none transition-all"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-chocolate-900 mb-1.5">
+                          {isRtl ? 'الكمية بالمخزن' : 'Stock Units'}
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          value={newItemForm.stockCount}
+                          onChange={(e) => setNewItemForm({ ...newItemForm, stockCount: e.target.value })}
+                          placeholder="60"
+                          className="w-full bg-white border border-[#2C180E]/15 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-mono text-chocolate-900 focus:border-gold-500 focus:ring-2 focus:ring-gold-500/20 outline-none transition-all"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-chocolate-900 mb-1.5">
+                          {isRtl ? 'وقت التحضير' : 'Prep Time'}
+                        </label>
+                        <input
+                          type="text"
+                          value={newItemForm.prepTime}
+                          onChange={(e) => setNewItemForm({ ...newItemForm, prepTime: e.target.value })}
+                          placeholder="4 mins"
+                          className="w-full bg-white border border-[#2C180E]/15 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-chocolate-900 focus:border-gold-500 focus:ring-2 focus:ring-gold-500/20 outline-none transition-all"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-chocolate-900 mb-1.5">
+                          {isRtl ? 'السعرات (kcal)' : 'Calories'}
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          value={newItemForm.calories}
+                          onChange={(e) => setNewItemForm({ ...newItemForm, calories: e.target.value })}
+                          placeholder="250"
+                          className="w-full bg-white border border-[#2C180E]/15 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-mono text-chocolate-900 focus:border-gold-500 focus:ring-2 focus:ring-gold-500/20 outline-none transition-all"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* SECTION 3: Media & Live Image Preview Box */}
+                  <div className="bg-[#FAF8F5] p-4 sm:p-5 rounded-2xl border border-[#2C180E]/10 space-y-3.5">
+                    <div className="flex items-center gap-2 pb-2 border-b border-stone-200/60 text-xs font-bold text-chocolate-900">
+                      <span className="text-gold-600">🖼️</span>
+                      <span>{isRtl ? 'صورة الصنف والمعاينة المباشرة' : 'Item Image & Live Preview'}</span>
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                      {/* Live Image Preview Box */}
+                      <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden border-2 border-gold-500/30 shadow-md bg-stone-100 shrink-0 flex items-center justify-center">
+                        {newItemForm.imageUrl ? (
+                          <img
+                            src={newItemForm.imageUrl}
+                            alt="Preview"
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = "https://images.unsplash.com/photo-1541167760496-1628856ab772?auto=format&fit=crop&w=300&q=80";
+                            }}
+                          />
+                        ) : (
+                          <span className="text-2xl text-stone-400">🖼️</span>
+                        )}
+                        <span className="absolute bottom-1 start-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-chocolate-950/80 text-gold-300">
+                          {isRtl ? 'معاينة' : 'Preview'}
+                        </span>
+                      </div>
+
+                      {/* Image URL Input */}
+                      <div className="flex-1 min-w-0">
+                        <label className="block text-xs font-bold text-chocolate-900 mb-1.5">
+                          {isRtl ? 'رابط الصورة (URL)' : 'Image URL'} <span className="text-gold-500 font-bold">*</span>
+                        </label>
+                        <input
+                          type="url"
+                          required
+                          value={newItemForm.imageUrl}
+                          onChange={(e) => setNewItemForm({ ...newItemForm, imageUrl: e.target.value })}
+                          placeholder="https://images.unsplash.com/..."
+                          className="w-full bg-white border border-[#2C180E]/15 rounded-xl px-4 py-2.5 text-xs font-mono text-chocolate-900 placeholder:text-stone-400 focus:border-gold-500 focus:ring-2 focus:ring-gold-500/20 outline-none transition-all"
+                        />
+                        <p className="text-[11px] text-stone-400 mt-1">
+                          {isRtl ? 'يقبل روابط الصور المباشرة (Unsplash, CDN, JPG, PNG, WebP)' : 'Direct image URLs supported'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* SECTION 4: Modern iOS-Style Toggle Switch */}
+                  <div className="bg-[#FAF8F5] p-4 sm:p-5 rounded-2xl border border-[#2C180E]/10 flex items-center justify-between gap-4">
+                    <div className="space-y-0.5">
+                      <div className="flex items-center gap-1.5 text-xs sm:text-sm font-bold text-chocolate-900">
+                        <span>✨</span>
+                        <span>{isRtl ? 'تعيين كصنف مميز (Featured Item)' : 'Mark as Featured Item'}</span>
+                      </div>
+                      <p className="text-xs text-stone-500">
+                        {isRtl ? 'يبرز الصنف في الصفحة الرئيسية للضيوف وبانر التوصيات الترويجي' : 'Highlights the item on guest home screen & recommendations'}
+                      </p>
+                    </div>
+
+                    {/* Toggle Switch */}
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={newItemForm.featured}
+                      onClick={() => setNewItemForm({ ...newItemForm, featured: !newItemForm.featured })}
+                      className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                        newItemForm.featured ? 'bg-gradient-to-r from-[#D4A037] to-[#C08625]' : 'bg-stone-300'
+                      }`}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                          newItemForm.featured
+                            ? (isRtl ? '-translate-x-5' : 'translate-x-5')
+                            : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                </form>
+
+                {/* Fixed Footer Buttons */}
+                <div className="px-7 py-4 border-t border-stone-100 bg-white flex items-center justify-end gap-3 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setIsModalOpen(false)}
+                    className="px-6 py-2.5 rounded-xl text-xs font-bold text-[#2C180E]/70 hover:bg-[#2C180E]/5 hover:text-[#2C180E] border border-stone-200 transition-all"
+                  >
+                    {isRtl ? 'إلغاء' : 'Cancel'}
+                  </button>
+                  <button
+                    type="submit"
+                    form="createItemForm"
+                    className="px-8 py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-[#D4A037] to-[#C08625] hover:from-[#C08625] hover:to-[#9B6619] shadow-md hover:shadow-lg shadow-gold-500/25 transition-all flex items-center gap-2"
+                  >
+                    <span>{isRtl ? 'نشر الصنف في القائمة' : 'Publish Item'}</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* EDIT BANNER MODAL (NO BLUR, MAX-W-2XL) */}
+          {editingBanner && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/50 overflow-hidden animate-fade-in">
+              <div className="fixed inset-0" onClick={() => setEditingBanner(null)} />
+              
+              <div className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl p-7 my-auto z-10 border border-stone-200 max-h-[88vh] flex flex-col overflow-hidden animate-scale-up">
+                <div className="flex items-center justify-between pb-4 mb-4 border-b border-stone-100 shrink-0">
+                  <div>
+                    <h3 className="text-lg sm:text-xl font-bold text-chocolate-900">
+                      {isRtl ? 'تعديل بانر التطبيق' : 'Edit App Banner'}
+                    </h3>
+                    <p className="text-xs text-stone-500 mt-0.5">
+                      {isRtl ? 'إدارة صورة ونص العرض الترويجي على التطبيق' : 'Manage promotional mobile application slides and links'}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setEditingBanner(null)}
+                    className="p-2 text-stone-400 hover:text-chocolate-900 rounded-xl hover:bg-stone-100 shrink-0"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <form id="editBannerForm" onSubmit={handleSaveBanner} className="space-y-4 text-xs sm:text-sm overflow-y-auto flex-1 pr-1.5 custom-scrollbar">
+                  <div>
+                    <label className="block font-bold text-chocolate-900 mb-1">{isRtl ? 'عنوان البانر الرئيسي *' : 'Banner Headline Title *'}</label>
+                    <input
+                      type="text"
+                      required
+                      value={isRtl ? editingBanner.titleAr : editingBanner.title}
+                      onChange={(e) => setEditingBanner(isRtl ? { ...editingBanner, titleAr: e.target.value } : { ...editingBanner, title: e.target.value })}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-chocolate-900 mb-1">{isRtl ? 'الوصف / نص العرض' : 'Subtitle / Offer Description'}</label>
+                    <textarea
+                      rows={2}
+                      value={editingBanner.subtitle}
+                      onChange={(e) => setEditingBanner({ ...editingBanner, subtitle: e.target.value })}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block font-bold text-chocolate-900 mb-1">{isRtl ? 'وسم العرض (Badge)' : 'Badge Tag'}</label>
+                      <input
+                        type="text"
+                        value={editingBanner.badge}
+                        onChange={(e) => setEditingBanner({ ...editingBanner, badge: e.target.value })}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300"
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-bold text-chocolate-900 mb-1">{isRtl ? 'موضع البانر' : 'Banner API Slot'}</label>
+                      <input
+                        type="text"
+                        disabled
+                        value="main_banner_slot"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-stone-200 bg-stone-100 text-stone-500 font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-chocolate-900 mb-1">{isRtl ? 'رابط الصورة (Image URL) *' : 'Image URL *'}</label>
+                    <input
+                      type="url"
+                      required
+                      value={editingBanner.imageUrl}
+                      onChange={(e) => setEditingBanner({ ...editingBanner, imageUrl: e.target.value })}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 font-mono text-xs"
+                    />
+                  </div>
+                </form>
+
+                <div className="flex items-center justify-end gap-3 pt-4 mt-3 border-t border-stone-100 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setEditingBanner(null)}
+                    className="px-5 py-2.5 text-xs font-bold text-stone-600 hover:text-chocolate-900 bg-white border border-stone-200 rounded-xl"
+                  >
+                    {isRtl ? 'إلغاء' : 'Cancel'}
+                  </button>
+                  <button
+                    type="submit"
+                    form="editBannerForm"
+                    className="px-6 py-2.5 text-xs font-bold text-chocolate-950 bg-gold-500 hover:bg-gold-400 rounded-xl shadow-gold-glow"
+                  >
+                    {isRtl ? 'حفظ التعديلات' : 'Save Changes'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Receipt Modal (NO BLUR) */}
+          {selectedOrder && (
+            <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+              <div className="bg-white rounded-3xl p-6 max-w-sm w-full border border-stone-200 shadow-2xl space-y-4 animate-scale-up">
+                <div className="text-center pb-3 border-b border-dashed border-stone-300 space-y-1">
+                  <h3 className="font-black text-base uppercase">CAFE 90</h3>
+                  <p className="text-[11px] text-stone-500">Order #{selectedOrder.orderNumber} Tax Receipt</p>
+                </div>
+                <div className="space-y-1 text-xs">
+                  <p><strong>{t('customer')}:</strong> {selectedOrder.customerName}</p>
+                  <p><strong>{t('total')}:</strong> <span className="font-mono font-bold">EGP {selectedOrder.totalPrice}</span></p>
+                </div>
+                <button
+                  onClick={() => setSelectedOrder(null)}
+                  className="w-full py-2.5 bg-chocolate-900 text-white font-bold text-xs rounded-xl"
+                >
+                  {t('closeReceipt')}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Toast Message */}
+          {toastMsg && (
+            <div className="fixed bottom-6 end-6 bg-chocolate-950 text-gold-300 border border-gold-500/50 px-5 py-3.5 rounded-2xl shadow-2xl text-xs font-bold z-50 animate-fade-in">
+              {toastMsg}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
