@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { api } from '../services/api';
+import { apiClient } from '../services/apiClient';
 import { disconnectEcho } from '../echo';
+import { isStaffRole } from '../utils/permissions';
 
 const AuthContext = createContext(null);
 
@@ -29,12 +31,46 @@ export const AuthProvider = ({ children }) => {
     return () => window.removeEventListener('auth:unauthorized', handleUnauthorized);
   }, []);
 
+  // Re-sync the signed-in user's role from the server on load, so a role change
+  // made by an admin (e.g. user -> cashier, or cashier removed) takes effect on refresh.
+  useEffect(() => {
+    if (!token) return;
+    let cancelled = false;
+    apiClient.get('/me', {}, { forceFresh: true })
+      .then((res) => {
+        const fresh = res?.user || res?.data?.user;
+        if (cancelled || !fresh) return;
+        if (!isStaffRole(fresh.role)) {
+          // No longer staff -> sign out of the dashboard
+          window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+          return;
+        }
+        setUser(fresh);
+        localStorage.setItem('admin_user', JSON.stringify(fresh));
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [token]);
+
   const login = async (email, password) => {
     setLoading(true);
     try {
       const res = await api.login({ email, password });
       const authToken = res.token || res.data?.token || res.access_token || '';
       const userData = res.user || res.data?.user || { email, name: 'Admin' };
+
+      // Only staff (admin / cashier) can use the dashboard
+      if (authToken && userData.role && !isStaffRole(userData.role)) {
+        // Revoke the token we just got so it isn't left active
+        apiClient.request('/logout', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${authToken}` }
+        }).catch(() => {});
+        const isAr = (localStorage.getItem('cafe90_language') || 'ar') === 'ar';
+        throw new Error(isAr
+          ? 'هذا الحساب ليس لديه صلاحية دخول لوحة التحكم'
+          : 'This account does not have dashboard access');
+      }
 
       if (authToken) {
         setToken(authToken);
@@ -94,6 +130,9 @@ export const AuthProvider = ({ children }) => {
       value={{
         token,
         user,
+        role: user?.role || 'admin',
+        isAdmin: (user?.role || 'admin') === 'admin',
+        isCashier: user?.role === 'cashier',
         isAuthenticated: Boolean(token),
         loading,
         login,

@@ -12,8 +12,10 @@ import {
   Smartphone,
   Coffee,
   Trash2,
-  Users
+  Users,
+  CalendarCheck
 } from 'lucide-react';
+import { canAccessView } from '../../utils/permissions';
 
 // Single source of truth for the dashboard navigation (used by Sidebar + Header).
 export const NAV_GROUPS = [
@@ -39,6 +41,8 @@ export const NAV_GROUPS = [
       { id: 'users', labelKey: 'navUsers', icon: Users, badgeKey: null },
       { id: 'points-coupons', labelKey: 'navPointsCoupons', icon: Award, badgeKey: null },
       { id: 'facilities-rooms', labelKey: 'navFacilitiesRooms', icon: DoorOpen, badgeKey: 'pendingBookings', urgent: true },
+      // Bookings-only screen (no room editing) - shown to the cashier instead of Facilities & Rooms
+      { id: 'bookings', labelKey: 'navBookings', icon: CalendarCheck, badgeKey: 'pendingBookings', urgent: true, cashierOnly: true },
       { id: 'tables', labelKey: 'navDiningTables', icon: Coffee, badgeKey: null },
       { id: 'reviews', labelKey: 'navReviews', icon: Star, badgeKey: 'newReviews' }
     ]
@@ -52,6 +56,17 @@ export const NAV_GROUPS = [
     ]
   }
 ];
+
+// Nav groups filtered by the signed-in user's role (empty groups removed)
+export const getNavGroupsForRole = (role) =>
+  NAV_GROUPS
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) =>
+        role === 'cashier' ? canAccessView(role, item.id) : !item.cashierOnly
+      )
+    }))
+    .filter((group) => group.items.length > 0);
 
 export const findNavItem = (viewId) => {
   for (const group of NAV_GROUPS) {

@@ -18,6 +18,7 @@ import { apiClient } from '../../services/apiClient';
 import { useToast } from '../../context/ToastContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useNotifications } from '../../context/NotificationContext';
+import { useAuth } from '../../context/AuthContext';
 import { findNavItem } from './navConfig';
 
 const iconBtn =
@@ -33,6 +34,7 @@ export const Header = ({
   const toast = useToast();
   const { language, toggleLanguage, isRtl, t } = useLanguage();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+  const { isCashier } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [today, setToday] = useState(new Date());
@@ -146,6 +148,7 @@ export const Header = ({
 
         {/* Search */}
         <div className="hidden md:flex flex-1 max-w-md mx-2">
+          {!isCashier && (
           <form onSubmit={handleSearchSubmit} className="relative w-full group" role="search">
             <Search
               className={`w-4 h-4 text-stone-400 group-focus-within:text-gold-600 absolute top-1/2 -translate-y-1/2 pointer-events-none transition-colors ${
@@ -179,6 +182,7 @@ export const Header = ({
               /
             </kbd>
           </form>
+          )}
         </div>
 
         {/* Actions */}

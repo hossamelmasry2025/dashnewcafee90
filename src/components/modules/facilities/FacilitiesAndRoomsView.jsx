@@ -265,7 +265,8 @@ const DEFAULT_FACILITIES = [
   }
 ];
 
-export const FacilitiesAndRoomsView = ({ initialTab = 'rooms' }) => {
+// bookingsOnly: cashier mode - shows the bookings schedule only (no room/table/facility editing)
+export const FacilitiesAndRoomsView = ({ initialTab = 'rooms', bookingsOnly = false }) => {
   const toast = useToast();
   const { isRtl, language, t } = useLanguage();
   const fileInputRef = useRef(null);
@@ -1589,23 +1590,30 @@ export const FacilitiesAndRoomsView = ({ initialTab = 'rooms' }) => {
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="text-lg sm:text-xl font-bold text-chocolate-900">
-              {t('navFacilitiesRooms', isRtl ? 'إدارة المرافق وغرف الاجتماعات VIP' : 'Facilities & VIP Rooms Management')}
+              {bookingsOnly
+                ? t('navBookings', isRtl ? 'حجوزات الغرف' : 'Room Bookings')
+                : t('navFacilitiesRooms', isRtl ? 'إدارة المرافق وغرف الاجتماعات VIP' : 'Facilities & VIP Rooms Management')}
             </h2>
+            {!bookingsOnly && (
             <span className="inline-flex items-center gap-1.5 h-6 px-2 rounded-full bg-gold-50 text-gold-800 ring-1 ring-inset ring-gold-200/70 text-xs font-semibold tabular-nums whitespace-nowrap">
               <span className="w-1.5 h-1.5 rounded-full bg-gold-500" />
               {activeTab === 'tables'
                 ? `${tables.length} ${isRtl ? 'طاولة مسجلة' : 'Tables'}`
                 : `${rooms.length} ${isRtl ? 'غرف مجهزة' : 'VIP Rooms'}`}
             </span>
+            )}
           </div>
           <p className="text-[13px] text-stone-500 mt-1 leading-relaxed max-w-2xl">
-            {isRtl
+            {bookingsOnly
+              ? (isRtl ? 'متابعة حجوزات الغرف وتأكيدها أو رفضها.' : 'Review room bookings and confirm or reject them.')
+              : isRtl
               ? 'إدارة غرف الاجتماعات، طاولات الصالة، تسعير الساعات (ج.م)، نقاط الولاء، الجولات الافتراضية 360°، وسجل الحجوزات اليومية.'
               : 'Manage executive meeting pods, dining tables, hourly rates (EGP), loyalty points reward, 360° virtual tours, and live booking schedule.'}
           </p>
         </div>
 
         {/* Tab Switcher */}
+        {!bookingsOnly && (
         <div className="flex items-center gap-0.5 p-1 bg-stone-200/50 rounded-xl overflow-x-auto custom-scrollbar max-w-full shrink-0 self-start xl:self-auto">
           {[
             { key: 'rooms', Icon: DoorOpen, label: isRtl ? 'غرف وقاعات VIP' : 'VIP Meeting Rooms', count: rooms.length },
@@ -1632,6 +1640,7 @@ export const FacilitiesAndRoomsView = ({ initialTab = 'rooms' }) => {
             </button>
           ))}
         </div>
+        )}
       </div>
 
       {/* ======================================================== */}

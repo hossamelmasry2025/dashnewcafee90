@@ -171,6 +171,15 @@ export const api = {
     return res;
   },
 
+  /**
+   * Change a user's dashboard role: 'user' | 'cashier' | 'admin' (admin only)
+   * Endpoint: PUT /admin/users/{id}/role
+   */
+  async updateUserRole(id, role) {
+    apiClient.invalidateCache('/admin/users');
+    return await apiClient.put(`/admin/users/${id}/role`, { role });
+  },
+
   // ----------------------------------------------------
   // ADMIN KPI STATS (GET /admin/stats)
   // ----------------------------------------------------

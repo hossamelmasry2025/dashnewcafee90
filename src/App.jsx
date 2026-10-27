@@ -20,6 +20,7 @@ import { UsersView } from './components/modules/users/UsersView';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { NotificationProvider, useNotifications } from './context/NotificationContext';
 import { api, flattenReviews } from './services/api';
+import { canAccessView, defaultViewFor } from './utils/permissions';
 
 const VALID_VIEWS = [
   'overview',
@@ -35,7 +36,8 @@ const VALID_VIEWS = [
   'cafe-info',
   'notifications',
   'app-version',
-  'tables'
+  'tables',
+  'bookings'
 ];
 
 function getInitialView() {
@@ -53,7 +55,7 @@ function getInitialView() {
 }
 
 function DashboardApp() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, role, isCashier } = useAuth();
   const { unreadCount: contextUnreadCount } = useNotifications();
   // Navigation View State with persistence on refresh & hash routing
   const [currentView, setCurrentView] = useState(getInitialView);
@@ -95,6 +97,14 @@ function DashboardApp() {
     } catch (e) {}
   }, [currentView]);
 
+  // Role guard: cashier can only open orders / bookings / notifications
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    if (!canAccessView(role, currentView)) {
+      setCurrentView(currentView === 'facilities-rooms' && isCashier ? 'bookings' : defaultViewFor(role));
+    }
+  }, [isAuthenticated, role, isCashier, currentView]);
+
   // Support browser Back/Forward navigation
   useEffect(() => {
     const handleHashChange = () => {
@@ -110,6 +120,24 @@ function DashboardApp() {
   // Load live counts for sidebar badges
   const refreshStats = async () => {
     if (!isAuthenticated) return;
+    if (isCashier) {
+      // Cashier only needs order + booking badges (other endpoints are admin-only)
+      try {
+        const [ordersRes, bookingsRes] = await Promise.allSettled([api.getOrders(), api.getBookings()]);
+        const orders = ordersRes.status === 'fulfilled' && Array.isArray(ordersRes.value) ? ordersRes.value : [];
+        const bookings = bookingsRes.status === 'fulfilled' && Array.isArray(bookingsRes.value) ? bookingsRes.value : [];
+        setRawStats({
+          pendingOrdersCount: orders.filter(o => ['pending', 'new', 'open'].includes(String(o.status || '').toLowerCase())).length,
+          newReviewsThisWeek: 0,
+          pendingBookingsCount: bookings.filter(b => String(b.status || '').toLowerCase() === 'pending').length,
+          bannersCount: 0,
+          trashedCount: 0
+        });
+      } catch (e) {
+        console.error('Error refreshing stats:', e);
+      }
+      return;
+    }
     try {
       const [ordersRes, reviewsRes, bookingsRes, bannersRes, banner2sRes, banner3sRes, trashedItemsRes, trashedCatsRes] = await Promise.allSettled([
         api.getOrders(),
@@ -175,11 +203,15 @@ function DashboardApp() {
         window.removeEventListener('notification:received', handleRealtimeUpdate);
       };
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, isCashier]);
 
   const [menuInitialTab, setMenuInitialTab] = useState('all');
 
-  const handleNavigate = (viewId, params = null) => {
+  const handleNavigate = (requestedView, params = null) => {
+    let viewId = requestedView;
+    if (!canAccessView(role, viewId)) {
+      viewId = viewId === 'facilities-rooms' && isCashier ? 'bookings' : defaultViewFor(role);
+    }
     if (viewId === 'menu-items') {
       setMenuInitialTab(params?.tab || 'all');
     }
@@ -215,7 +247,7 @@ function DashboardApp() {
   const computedStats = {
     pendingOrdersCount: (currentView === 'orders' || clearedViews['orders']) ? 0 : rawStats.pendingOrdersCount,
     newReviewsThisWeek: (currentView === 'reviews' || clearedViews['reviews']) ? 0 : rawStats.newReviewsThisWeek,
-    pendingBookingsCount: (currentView === 'facilities-rooms' || clearedViews['facilities-rooms']) ? 0 : rawStats.pendingBookingsCount,
+    pendingBookingsCount: (currentView === 'facilities-rooms' || clearedViews['facilities-rooms'] || currentView === 'bookings' || clearedViews['bookings']) ? 0 : rawStats.pendingBookingsCount,
     bannersCount: (currentView === 'banners' || clearedViews['banners']) ? 0 : rawStats.bannersCount,
     trashedCount: (currentView === 'recycle-bin' || clearedViews['recycle-bin']) ? 0 : rawStats.trashedCount,
     unreadNotificationsCount: (currentView === 'notifications' || clearedViews['notifications']) ? 0 : (contextUnreadCount || 0)
@@ -230,6 +262,7 @@ function DashboardApp() {
       onViewOrder={handleViewOrder}
     >
       {/* Dynamic Module Router */}
+      {canAccessView(role, currentView) && (
       <ErrorBoundary key={currentView}>
         {currentView === 'overview' && (
           <Overview
@@ -274,6 +307,8 @@ function DashboardApp() {
 
         {currentView === 'tables' && <FacilitiesAndRoomsView initialTab="tables" />}
 
+        {currentView === 'bookings' && <FacilitiesAndRoomsView initialTab="bookings" bookingsOnly />}
+
         {currentView === 'reviews' && <ReviewsView />}
 
         {currentView === 'cafe-info' && <CafeInfoView onNavigate={handleNavigate} />}
@@ -287,6 +322,7 @@ function DashboardApp() {
 
         {currentView === 'app-version' && <AppVersionView />}
       </ErrorBoundary>
+      )}
     </Layout>
   );
 }

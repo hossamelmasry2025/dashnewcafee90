@@ -26,13 +26,17 @@ import {
   Hash,
   Activity,
   Layers,
-  Coffee
+  Coffee,
+  Receipt,
+  KeyRound
 } from 'lucide-react';
 import { api } from '../../../services/api';
 import { Button } from '../../common/Button';
 import { Badge } from '../../common/Badge';
 import { Modal } from '../../common/Modal';
+import { ConfirmDialog } from '../../common/ConfirmDialog';
 import { useToast } from '../../../context/ToastContext';
+import { useAuth } from '../../../context/AuthContext';
 import { useLanguage } from '../../../context/LanguageContext';
 
 // Icon tints for the role filter cards
@@ -40,12 +44,46 @@ const USER_STAT_TINTS = {
   all: 'bg-gold-50 text-gold-700 ring-gold-200/70',
   user: 'bg-emerald-50 text-emerald-700 ring-emerald-200/60',
   admin: 'bg-amber-50 text-amber-700 ring-amber-200/60',
+  cashier: 'bg-violet-50 text-violet-700 ring-violet-200/60',
   guest: 'bg-sky-50 text-sky-700 ring-sky-200/60'
 };
+
+// Roles an admin can assign from the user profile
+const ASSIGNABLE_ROLES = [
+  {
+    id: 'user',
+    icon: UserCheck,
+    labelAr: 'عميل',
+    labelEn: 'Customer',
+    descAr: 'يستخدم التطبيق فقط، بدون دخول لوحة التحكم.',
+    descEn: 'App only, no dashboard access.'
+  },
+  {
+    id: 'cashier',
+    icon: Receipt,
+    labelAr: 'كاشير',
+    labelEn: 'Cashier',
+    descAr: 'يستقبل الطلبات والحجوزات ويجهزها ويأكد الدفع. لا يعدّل المنيو أو الأسعار أو البانرات أو الغرف أو المستخدمين.',
+    descEn: 'Receives orders & bookings, prepares them and confirms payment. Cannot edit menu, prices, banners, rooms or users.'
+  },
+  {
+    id: 'admin',
+    icon: Shield,
+    labelAr: 'مسؤول (Admin)',
+    labelEn: 'Admin',
+    descAr: 'صلاحيات كاملة على لوحة التحكم.',
+    descEn: 'Full dashboard access.'
+  }
+];
 
 export const UsersView = ({ onNavigate, onViewOrder }) => {
   const toast = useToast();
   const { isRtl, t } = useLanguage();
+  const { user: currentUser } = useAuth();
+
+  // Role change (permissions) state
+  const [pendingRole, setPendingRole] = useState(null);
+  const [savingRole, setSavingRole] = useState(false);
 
   // Query & Filter States
   const [searchInput, setSearchInput] = useState('');
@@ -66,6 +104,7 @@ export const UsersView = ({ onNavigate, onViewOrder }) => {
     all: 0,
     user: 0,
     admin: 0,
+    cashier: 0,
     guest: 0
   });
   const [loading, setLoading] = useState(true);
@@ -228,6 +267,27 @@ export const UsersView = ({ onNavigate, onViewOrder }) => {
     }
   };
 
+  // Change the selected user's role (PUT /admin/users/{id}/role)
+  const handleConfirmRoleChange = async () => {
+    const target = userDetails?.user || selectedUser;
+    if (!target?.id || !pendingRole) return;
+    try {
+      setSavingRole(true);
+      const res = await api.updateUserRole(target.id, pendingRole);
+      const updated = res?.user || { ...target, role: pendingRole };
+      setUserDetails((prev) => (prev?.user ? { ...prev, user: { ...prev.user, ...updated } } : prev));
+      setSelectedUser((prev) => (prev ? { ...prev, role: updated.role } : prev));
+      setUsers((prev) => prev.map((u) => (u.id === target.id ? { ...u, role: updated.role } : u)));
+      toast.success(res?.message || (isRtl ? 'تم تحديث صلاحية المستخدم' : 'User role updated'));
+      setPendingRole(null);
+      fetchUsers(true);
+    } catch (err) {
+      toast.error(err.message || (isRtl ? 'تعذر تحديث الصلاحية' : 'Failed to update role'));
+    } finally {
+      setSavingRole(false);
+    }
+  };
+
   // Format date helper
   const formatDate = (dateStr) => {
     if (!dateStr) return isRtl ? 'غير محدد' : 'N/A';
@@ -269,6 +329,14 @@ export const UsersView = ({ onNavigate, onViewOrder }) => {
         <span className="inline-flex items-center gap-1 h-6 px-2 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200/70 whitespace-nowrap">
           <Shield className="w-3 h-3 text-amber-600" />
           {isRtl ? 'مسؤول (Admin)' : 'Admin'}
+        </span>
+      );
+    }
+    if (r === 'cashier') {
+      return (
+        <span className="inline-flex items-center gap-1 h-6 px-2 rounded-full text-xs font-medium bg-violet-50 text-violet-700 border border-violet-200/70 whitespace-nowrap">
+          <Receipt className="w-3 h-3 text-violet-600" />
+          {isRtl ? 'كاشير' : 'Cashier'}
         </span>
       );
     }
@@ -355,7 +423,7 @@ export const UsersView = ({ onNavigate, onViewOrder }) => {
       </div>
 
       {/* 4 Top Cards (Sidebar Dark Espresso Theme with White Text & Gold Accents) */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
         {[
           {
             id: 'all',
@@ -386,6 +454,16 @@ export const UsersView = ({ onNavigate, onViewOrder }) => {
             badge: isRtl ? 'مشرف' : 'Admin',
             activeColor: 'text-amber-400',
             bgGlow: 'from-amber-500/15'
+          },
+          {
+            id: 'cashier',
+            label: isRtl ? 'الكاشير' : 'Cashiers',
+            subtitle: isRtl ? 'الطلبات والحجوزات فقط' : 'Orders & bookings only',
+            count: countsByRole.cashier,
+            icon: Receipt,
+            badge: isRtl ? 'كاشير' : 'Cashier',
+            activeColor: 'text-violet-400',
+            bgGlow: 'from-violet-500/15'
           },
           {
             id: 'guest',
@@ -940,6 +1018,67 @@ export const UsersView = ({ onNavigate, onViewOrder }) => {
                 </div>
               </div>
 
+              {/* Permissions (role) */}
+              {resolvedUser.id && String(resolvedUser.role || 'user').toLowerCase() !== 'guest' && (
+                <div className="bg-white rounded-2xl p-5 border border-stone-200/70 shadow-card">
+                  <div className="flex items-center gap-2 mb-1">
+                    <KeyRound className="w-4 h-4 text-gold-600" />
+                    <h3 className="text-sm font-bold text-chocolate-900">
+                      {isRtl ? 'الصلاحيات' : 'Permissions'}
+                    </h3>
+                  </div>
+                  {Number(resolvedUser.id) === Number(currentUser?.id) ? (
+                    <p className="text-xs text-stone-500">
+                      {isRtl ? 'لا يمكنك تغيير صلاحية حسابك.' : 'You cannot change your own role.'}
+                    </p>
+                  ) : (
+                    <>
+                      <p className="text-xs text-stone-500 mb-3">
+                        {isRtl
+                          ? 'اختر دور هذا المستخدم في لوحة التحكم. التطبيق على الموبايل يعمل معه بشكل طبيعي في كل الحالات.'
+                          : "Choose this user's dashboard role. The mobile app keeps working normally for them either way."}
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                        {ASSIGNABLE_ROLES.map((opt) => {
+                          const current = String(resolvedUser.role || 'user').toLowerCase() === opt.id;
+                          const Icon = opt.icon;
+                          return (
+                            <button
+                              key={opt.id}
+                              type="button"
+                              disabled={current || savingRole}
+                              onClick={() => setPendingRole(opt.id)}
+                              className={`text-start p-3 rounded-xl border transition-all ${
+                                current
+                                  ? 'border-gold-400 ring-4 ring-gold-400/15 bg-gold-50/40 cursor-default'
+                                  : 'border-stone-200 hover:border-stone-300 hover:bg-stone-50 cursor-pointer'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <span className={`w-7 h-7 rounded-lg flex items-center justify-center ring-1 ring-inset ${USER_STAT_TINTS[opt.id] || USER_STAT_TINTS.all}`}>
+                                  <Icon className="w-3.5 h-3.5" />
+                                </span>
+                                <span className="text-[13px] font-semibold text-chocolate-900">
+                                  {isRtl ? opt.labelAr : opt.labelEn}
+                                </span>
+                                {current && (
+                                  <span className="ms-auto text-[10px] font-semibold text-gold-800 bg-gold-100 rounded-full px-1.5 h-5 inline-flex items-center">
+                                    {isRtl ? 'الحالي' : 'Current'}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[11.5px] text-stone-500 mt-2 leading-relaxed">
+                                {isRtl ? opt.descAr : opt.descEn}
+                              </p>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+
               {/* KPI Strip */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {/* Loyalty Points */}
@@ -1306,6 +1445,25 @@ export const UsersView = ({ onNavigate, onViewOrder }) => {
           )}
         </div>
       </Modal>
+
+      {/* Confirm role change */}
+      <ConfirmDialog
+        isOpen={Boolean(pendingRole)}
+        onClose={() => !savingRole && setPendingRole(null)}
+        onConfirm={handleConfirmRoleChange}
+        loading={savingRole}
+        variant={pendingRole === 'admin' ? 'danger' : 'gold'}
+        title={isRtl ? 'تغيير صلاحية المستخدم؟' : 'Change user role?'}
+        message={(() => {
+          const opt = ASSIGNABLE_ROLES.find((r) => r.id === pendingRole);
+          const name = resolvedUser.name || resolvedUser.email || '';
+          if (!opt) return '';
+          return isRtl
+            ? `سيتم تحويل "${name}" إلى ${opt.labelAr}. ${opt.descAr}`
+            : `"${name}" will become ${opt.labelEn}. ${opt.descEn}`;
+        })()}
+        confirmText={isRtl ? 'تأكيد التغيير' : 'Confirm'}
+      />
     </div>
   );
 };

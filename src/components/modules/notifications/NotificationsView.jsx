@@ -37,6 +37,7 @@ import { Modal } from '../../common/Modal';
 import { useToast } from '../../../context/ToastContext';
 import { useLanguage } from '../../../context/LanguageContext';
 import { useNotifications } from '../../../context/NotificationContext';
+import { useAuth } from '../../../context/AuthContext';
 
 export const NotificationsView = ({ onNavigate, onViewOrder }) => {
   const toast = useToast();
@@ -59,6 +60,8 @@ export const NotificationsView = ({ onNavigate, onViewOrder }) => {
     unregisterDevice,
     simulateRealtimeNotification
   } = useNotifications();
+  // Cashier can read notifications but can't send push notices to customers
+  const { isAdmin } = useAuth();
 
   // Testing & Simulation Suite State
   const [isTestSuiteOpen, setIsTestSuiteOpen] = useState(false);
@@ -214,7 +217,7 @@ export const NotificationsView = ({ onNavigate, onViewOrder }) => {
 
   useEffect(() => {
     let isMounted = true;
-    if (usersList.length === 0) {
+    if (isAdmin && usersList.length === 0) {
       loadUsers();
     }
     return () => {
@@ -443,6 +446,7 @@ export const NotificationsView = ({ onNavigate, onViewOrder }) => {
             </Button>
           )}
 
+          {isAdmin && (
           <Button
             variant="gold"
             size="md"
@@ -451,6 +455,7 @@ export const NotificationsView = ({ onNavigate, onViewOrder }) => {
           >
             {isRtl ? 'إرسال إشعار جديد' : 'Send Push Notice'}
           </Button>
+          )}
         </div>
       </div>
 

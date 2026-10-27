@@ -2,7 +2,7 @@ import { LogOut, PanelLeftClose, PanelLeftOpen, X } from 'lucide-react';
 import logoImg from '../../assets/logo.png';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
-import { NAV_GROUPS } from './navConfig';
+import { getNavGroupsForRole } from './navConfig';
 
 const FALLBACK_AVATAR = null;
 
@@ -62,7 +62,8 @@ export const Sidebar = ({
   setIsMobileOpen
 }) => {
   const { isRtl, t } = useLanguage();
-  const { user, logout } = useAuth();
+  const { user, role, isCashier, logout } = useAuth();
+  const navGroups = getNavGroupsForRole(role);
 
   // On mobile the drawer always shows full labels
   const isCompact = collapsed && !isMobileOpen;
@@ -121,7 +122,7 @@ export const Sidebar = ({
         <div className={`flex items-center h-[72px] shrink-0 ${isCompact ? 'justify-center px-2' : 'justify-between px-4'}`}>
           <button
             type="button"
-            onClick={() => handleNavClick('overview')}
+            onClick={() => handleNavClick(isCashier ? 'orders' : 'overview')}
             className="flex items-center gap-3 min-w-0 rounded-xl"
             title="Cafe 90"
           >
@@ -132,7 +133,9 @@ export const Sidebar = ({
               <span className="flex flex-col items-start min-w-0 leading-tight">
                 <span className="font-serif text-[17px] font-bold text-white tracking-wide">Cafe 90</span>
                 <span className="text-[11px] text-gold-300/80 font-medium truncate">
-                  {isRtl ? 'لوحة الإدارة' : 'Admin Console'}
+                  {isCashier
+                    ? (isRtl ? 'لوحة الكاشير' : 'Cashier Console')
+                    : (isRtl ? 'لوحة الإدارة' : 'Admin Console')}
                 </span>
               </span>
             )}
@@ -168,7 +171,7 @@ export const Sidebar = ({
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto px-3 py-3">
-          {NAV_GROUPS.map((group, gIdx) => (
+          {navGroups.map((group, gIdx) => (
             <div key={group.groupKey || `g-${gIdx}`} className={gIdx > 0 ? 'mt-4' : ''}>
               {group.groupKey && (
                 isCompact ? (
