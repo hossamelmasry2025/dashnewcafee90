@@ -60,8 +60,8 @@ export const CafeInfoView = ({ onNavigate }) => {
     descriptionEn: 'The perfect place to relax and work. We offer specialty coffee, a calm atmosphere, and comfortable meeting spaces.',
     addressAr: 'الرياض',
     addressEn: 'Riyadh',
-    latitude: '24.7136000',
-    longitude: '46.6753000',
+    latitude: '',
+    longitude: '',
     workingHoursAr: 'الأحد - الخميس: 8ص - 11م',
     workingHoursEn: 'Sun - Thu: 8 AM - 11 PM',
     contactPhone: '01500973739',
@@ -71,6 +71,7 @@ export const CafeInfoView = ({ onNavigate }) => {
   });
 
   const [coverImageFile, setCoverImageFile] = useState(null);
+  const [mapsLink, setMapsLink] = useState('');
   const [galleryPhotos, setGalleryPhotos] = useState([]); // [{ id, imageUrl, order }]
 
   const loadData = async () => {
@@ -92,8 +93,8 @@ export const CafeInfoView = ({ onNavigate }) => {
           descriptionEn: cafe.description_en || '',
           addressAr: cafe.address_ar || cafe.address || '',
           addressEn: cafe.address_en || '',
-          latitude: String(cafe.latitude || '24.7136000'),
-          longitude: String(cafe.longitude || '46.6753000'),
+          latitude: cafe.latitude != null ? String(cafe.latitude) : '',
+          longitude: cafe.longitude != null ? String(cafe.longitude) : '',
           workingHoursAr: cafe.working_hours_ar || cafe.working_hours || '',
           workingHoursEn: cafe.working_hours_en || '',
           contactPhone: cafe.contact_phone || cafe.phone || '',
@@ -143,6 +144,37 @@ export const CafeInfoView = ({ onNavigate }) => {
         }
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  // Extract coordinates from a pasted Google Maps URL or a plain "lat, lng" pair
+  const parseMapsCoords = (text) => {
+    const patterns = [
+      /!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/,
+      /@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/,
+      /[?&](?:q|query|ll|destination)=(-?\d+(?:\.\d+)?)(?:,|%2C)\s*(-?\d+(?:\.\d+)?)/i,
+      /^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/
+    ];
+    for (const re of patterns) {
+      const m = text.match(re);
+      if (m) {
+        const lat = Number(m[1]);
+        const lng = Number(m[2]);
+        if (Math.abs(lat) <= 90 && Math.abs(lng) <= 180) return { lat, lng };
+      }
+    }
+    return null;
+  };
+
+  const handleMapsLinkChange = (value) => {
+    setMapsLink(value);
+    if (!value.trim()) return;
+    const coords = parseMapsCoords(value);
+    if (coords) {
+      setFormData((prev) => ({ ...prev, latitude: coords.lat.toFixed(7), longitude: coords.lng.toFixed(7) }));
+      toast.success(isRtl ? 'تم استخراج الإحداثيات من الرابط' : 'Coordinates extracted from link');
+    } else if (/goo\.gl|maps\.app/i.test(value)) {
+      toast.error(isRtl ? 'الرابط المختصر لا يحتوي على إحداثيات، افتحه في المتصفح وانسخ الرابط الكامل' : 'Short links have no coordinates — open it in a browser and copy the full URL');
     }
   };
 
@@ -520,6 +552,74 @@ export const CafeInfoView = ({ onNavigate }) => {
                   />
                 </div>
               </div>
+
+              {/* Google Maps Location */}
+              <div className="sm:col-span-2">
+                <label className={labelCls}>
+                  {isRtl ? 'رابط الموقع من جوجل ماب (اختياري)' : 'Google Maps link (optional)'}
+                </label>
+                <input
+                  type="text"
+                  dir="ltr"
+                  value={mapsLink}
+                  onChange={(e) => handleMapsLinkChange(e.target.value)}
+                  placeholder="https://www.google.com/maps/place/...@24.7136,46.6753,17z"
+                  className={inputCls}
+                />
+                <p className="text-xs text-stone-500 mt-1.5">
+                  {isRtl
+                    ? 'الصق رابط المكان من جوجل ماب (الرابط الكامل من المتصفح) أو الإحداثيات مثل 24.7136, 46.6753 وسيتم ملء خطوط الطول والعرض تلقائياً'
+                    : 'Paste the full place URL from Google Maps (browser address bar) or coordinates like 24.7136, 46.6753 to fill latitude/longitude automatically'}
+                </p>
+              </div>
+
+              <div>
+                <label className={labelCls}>
+                  {isRtl ? 'خط العرض (Latitude)' : 'Latitude'}
+                </label>
+                <input
+                  type="number"
+                  step="any"
+                  min="-90"
+                  max="90"
+                  dir="ltr"
+                  value={formData.latitude}
+                  onChange={(e) => setFormData({ ...formData, latitude: e.target.value })}
+                  placeholder="24.7136000"
+                  className={`${inputCls} tabular-nums`}
+                />
+              </div>
+
+              <div>
+                <label className={labelCls}>
+                  {isRtl ? 'خط الطول (Longitude)' : 'Longitude'}
+                </label>
+                <input
+                  type="number"
+                  step="any"
+                  min="-180"
+                  max="180"
+                  dir="ltr"
+                  value={formData.longitude}
+                  onChange={(e) => setFormData({ ...formData, longitude: e.target.value })}
+                  placeholder="46.6753000"
+                  className={`${inputCls} tabular-nums`}
+                />
+              </div>
+
+              {formData.latitude && formData.longitude && (
+                <div className="sm:col-span-2 -mt-2">
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${formData.latitude},${formData.longitude}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-gold-700 hover:text-gold-800"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    {isRtl ? 'معاينة الموقع على جوجل ماب' : 'Preview on Google Maps'}
+                  </a>
+                </div>
+              )}
 
               {/* Contact Phone */}
               <div className="sm:col-span-2 sm:max-w-[calc(50%-0.5rem)]">
